@@ -8,3 +8,5 @@ tmp/
 *.egg
 build
 htmlcov
+
+*.sqlite3

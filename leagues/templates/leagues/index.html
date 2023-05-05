@@ -1,0 +1,17 @@
+<h1>Bayes League</h1>
+
+Create a new league:
+
+<form action="{% url 'index' %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Create">
+</form>
+
+Existing public leagues:
+
+<ul>
+{% for league in leagues %}
+<li><a href={% url "league" league.slug %}>{{ league.title }}</a></li>
+{% endfor %}
+</ul>

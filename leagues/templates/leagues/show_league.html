@@ -1,0 +1,6 @@
+<h1>{{ league.title }}</h1>
+
+<ul>
+  <li><a href="{% url 'show_league_players' league.slug %}">Players</a></li>
+  <li><a href="{% url 'league_matches' league.slug %}">Matches</a></li>
+</ul>

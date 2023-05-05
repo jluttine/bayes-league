@@ -7,13 +7,16 @@ class League(models.Model):
     title = models.CharField(max_length=100)
     # TODO:
     # - password
-    # - public vs unlisted (boolean)
+    # - public / unlisted / private
+
+    def __str__(self):
+        return f"{self.slug} - {self.title}"
 
 
 class Player(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE)
     name = models.CharField(max_length=50)
-    uiid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
 
     class Meta:
         constraints = [
@@ -23,6 +26,9 @@ class Player(models.Model):
                 name="unique_names_in_league",
             ),
         ]
+
+    def __str__(self):
+        return f"{self.uuid} - {self.name}"
 
 
 class Match(models.Model):
@@ -38,7 +44,7 @@ class Match(models.Model):
         Player,
         related_name="away_match_set",
     )
-    uiid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
 
     class Meta:
         constraints = [
@@ -54,12 +60,15 @@ class Match(models.Model):
             # away team
         ]
 
+    def __str__(self):
+        return f"{self.uuid}"
+
 
 class Ranking(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE)
     players = models.ManyToManyField(Player)
     created_at = models.DateTimeField(auto_now_add=True)
-    uiid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
 
 
 class RankingScore(models.Model):

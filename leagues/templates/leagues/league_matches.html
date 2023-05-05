@@ -1,0 +1,42 @@
+<h1><a href="{% url "league" league.slug %}">{{ league.title }}</a></h1>
+
+Matches:
+
+<table>
+  <tr>
+    <th>Home team</th>
+    <th></th>
+    <th></th>
+    <th></th>
+    <th>Away team</th>
+  </tr>
+  {% for match in league.match_set.all %}
+  <tr>
+    <td>
+      {% for player in match.home_team.all %}
+      <a href="{% url 'player' player.uuid %}">{{ player.name }}</a><br />
+      {% endfor %}
+    </td>
+    <td>
+    </td>
+    <td>
+      -
+    </td>
+    <td>
+    </td>
+    <td>
+      {% for player in match.away_team.all %}
+      <a href="{% url 'player' player.uuid %}">{{ player.name }}</a><br />
+      {% endfor %}
+    </td>
+  </tr>
+  {% endfor %}
+</table>
+
+
+
+<form action="{% url 'league_matches' league.slug %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Add match">
+</form>

@@ -5,7 +5,14 @@
 To test locally, run the following commands in the project root directory (where
 `manage.py` file is located).
 
-To initialize the local database (run only once):
+Install dependencies (Django) in your preferred way. For instance:
+
+``` shell
+pip install django
+```
+
+
+Initialize the local database (run only once):
 
 ``` shell
 python manage.py makemigrations
@@ -13,7 +20,7 @@ python manage.py migrate
 
 ```
 
-To run the local server:
+Run the local server:
 
 ``` shell
 

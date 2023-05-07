@@ -1,4 +1,5 @@
 from django.forms import ModelForm
+from django.core.exceptions import ValidationError
 
 from . import models
 
@@ -29,3 +30,29 @@ class MatchForm(ModelForm):
     class Meta:
         model = models.Match
         fields = ["home_team", "away_team"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        league = self.instance.league
+        self.fields["home_team"].queryset = models.Player.objects.filter(league=league)
+        self.fields["away_team"].queryset = models.Player.objects.filter(league=league)
+        return
+
+    def clean(self):
+        # NOTE: These constraints can't be defined in Model Constraints because
+        # the constraints depend on multiple tables. They can't be defined in
+        # Model.clean because ManyToManyField isn't available there. So, they
+        # need to be defined here. But note that this doesn't put the
+        # constraints to the admin form!
+        league = self.instance.league
+        home = self.cleaned_data.get("home_team")
+        away = self.cleaned_data.get("away_team")
+        if any(p.league != league for p in home):
+            raise ValidationError(f"All home team players must be from league: {league.title}")
+        if any(p.league != league for p in away):
+            raise ValidationError(f"All away team players must be from league: {league.title}")
+        homeset = set(p.uuid for p in home)
+        awayset = set(p.uuid for p in away)
+        if not homeset.isdisjoint(awayset):
+            raise ValidationError("Players are allowed to play only in one of the teams, not both")
+        return

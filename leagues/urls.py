@@ -15,9 +15,24 @@ urlpatterns = [
         name="league",
     ),
     path(
+        "league/<slug:league_slug>/edit/",
+        views.edit_league,
+        name="edit_league",
+    ),
+    path(
         "league/<slug:league_slug>/players/",
         views.show_league_players,
         name="show_league_players",
+    ),
+    path(
+        "league/<slug:league_slug>/players/<uuid:player_uuid>/",
+        views.player,
+        name="player",
+    ),
+    path(
+        "league/<slug:league_slug>/players/<uuid:player_uuid>/edit/",
+        views.edit_player,
+        name="edit_player",
     ),
     path(
         "league/<slug:league_slug>/matches/",
@@ -25,12 +40,12 @@ urlpatterns = [
         name="league_matches",
     ),
     path(
-        "player/<uuid:player_uuid>/",
-        views.player,
-        name="player",
+        "league/<slug:league_slug>/matches/add/",
+        views.add_match,
+        name="add_match",
     ),
     path(
-        "match/<uuid:match_uuid>/",
+        "league/<slug:league_slug>/matches/<uuid:match_uuid>/",
         views.match,
         name="match",
     ),

@@ -6,6 +6,7 @@ mkShell {
   buildInputs = [
     (python3.withPackages (ps: with ps; [
       django
+      ipython
     ]))
   ];
 }

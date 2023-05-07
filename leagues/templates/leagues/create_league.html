@@ -1,4 +1,6 @@
-Create league: {{ slug }}
+<a href="{% url 'index' %}">BayesLeague</a>
+
+<h1>Create league under /{{ slug }}</h1>
 
 <form action="{% url 'league' slug %}" method="post">
     {% csrf_token %}

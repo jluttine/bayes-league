@@ -1,3 +1,5 @@
+<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'league' player.league.slug %}">{{ player.league.title }}</a> / <a href="{% url 'show_league_players' player.league.slug %}">Players</a>
+
 <h1>{{ player.name }}</h1>
 
-League: <a href="{% url "league" player.league.slug %}">{{ player.league.title }}</a>
+<a href="{% url 'edit_player' player.league.slug player.uuid %}">Edit</a>

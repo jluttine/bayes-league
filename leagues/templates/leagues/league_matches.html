@@ -1,42 +1,46 @@
-<h1><a href="{% url "league" league.slug %}">{{ league.title }}</a></h1>
+<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url "league" league.slug %}">{{ league.title }}</a>
 
-Matches:
+<h1>Matches</h1>
 
 <table>
-  <tr>
-    <th>Home team</th>
-    <th></th>
-    <th></th>
-    <th></th>
-    <th>Away team</th>
-  </tr>
-  {% for match in league.match_set.all %}
-  <tr>
-    <td>
-      {% for player in match.home_team.all %}
-      <a href="{% url 'player' player.uuid %}">{{ player.name }}</a><br />
-      {% endfor %}
-    </td>
-    <td>
-    </td>
-    <td>
-      -
-    </td>
-    <td>
-    </td>
-    <td>
-      {% for player in match.away_team.all %}
-      <a href="{% url 'player' player.uuid %}">{{ player.name }}</a><br />
-      {% endfor %}
-    </td>
-  </tr>
-  {% endfor %}
+  <thead>
+    <tr>
+      <th>Home team</th>
+      <th></th>
+      <th>Away team</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for match in league.match_set.with_total_points %}
+    <tr>
+      <td>
+        {% for player in match.home_team.all %}
+        <a href="{% url 'player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        {% endfor %}
+      </td>
+      <td>
+        -
+      </td>
+      <td>
+        {% for player in match.away_team.all %}
+        <a href="{% url 'player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        {% endfor %}
+      </td>
+      <td>
+        {% if match.period_count > 0 %}
+        <b>{{ match.total_home_points }} - {{ match.total_away_points }}</b>
+        {% if match.period_count > 1 %}
+        ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
+        {% endif %}
+        {% endif %}
+
+      </td>
+      <td><a href="{% url 'match' league.slug match.uuid %}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
 </table>
 
-
-
-<form action="{% url 'league_matches' league.slug %}" method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Add match">
-</form>
+<a href="{% url 'add_match' league.slug %}">Add match</a>

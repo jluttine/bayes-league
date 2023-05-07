@@ -2,6 +2,7 @@ import uuid
 
 from django.db import models
 
+
 class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
     title = models.CharField(max_length=100)
@@ -14,9 +15,21 @@ class League(models.Model):
 
 
 class Player(models.Model):
-    league = models.ForeignKey(League, on_delete=models.CASCADE)
-    name = models.CharField(max_length=50)
-    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    league = models.ForeignKey(
+        League,
+        on_delete=models.CASCADE,
+        # Don't edit the league because otherwise existing matches might include
+        # players from different leagues
+        editable=False,
+    )
+    name = models.CharField(
+        max_length=50,
+    )
+    uuid = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
 
     class Meta:
         constraints = [
@@ -31,10 +44,24 @@ class Player(models.Model):
         return f"{self.uuid} - {self.name}"
 
 
+class MatchManager(models.Manager):
+
+    def with_total_points(self):
+        return self.annotate(
+            period_count=models.Count("period"),
+            total_home_points=models.Sum("period__home_points"),
+            total_away_points=models.Sum("period__away_points"),
+        )
+
+
 class Match(models.Model):
+    objects = MatchManager()
     league = models.ForeignKey(
         League,
         on_delete=models.CASCADE,
+        # Don't edit the league because otherwise existing matches might include
+        # players from different leagues
+        editable=False,
     )
     home_team = models.ManyToManyField(
         Player,
@@ -44,24 +71,26 @@ class Match(models.Model):
         Player,
         related_name="away_match_set",
     )
-    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
-
-    class Meta:
-        constraints = [
-            # I) Each team must have at least one player
-            #
-            # II) All players must be in the same league
-            # models.CheckConstraint(
-            #     models.F("league")
-            #     name="players_in_same_league",
-            # )
-            #
-            # III) Player can be selected only once and only to either home or
-            # away team
-        ]
+    uuid = models.UUIDField(
+        unique=True,
+        default=uuid.uuid4,
+        editable=False,
+    )
 
     def __str__(self):
         return f"{self.uuid}"
+
+    def total_score(self):
+        self.period_set.objects.all()
+        return (
+
+        )
+
+
+class Period(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    home_points = models.PositiveIntegerField()
+    away_points = models.PositiveIntegerField()
 
 
 class Ranking(models.Model):

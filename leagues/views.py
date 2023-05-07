@@ -1,37 +1,62 @@
 from django.shortcuts import render, get_object_or_404
 from django import http
 from django.urls import reverse
+from django.forms import inlineformset_factory
 
 from . import models
 from . import forms
 
 
-def form_view(request, Form, template, redirect, instance_kwargs={}, context={},
-              save=True):
+class DummyInlineFormSet():
+
+    def __init__(self, *args, **kwargs):
+        return
+
+    def is_valid(self):
+        return True
+
+    def save(self):
+        return
+
+
+def form_view(request, Form, template, redirect, context={}, save=True,
+              InlineFormSet=DummyInlineFormSet, instance=None):
+
+    if instance is None:
+        instance = Form.Meta.model()
+
     if request.method == "POST":
+
         form = Form(
             request.POST,
-            instance=Form.Meta.model(**instance_kwargs)
+            instance=instance,
         )
+
+        formset = InlineFormSet(request.POST, request.FILES, instance=form.instance)
         if form.is_valid():
-            if save:
-                form.save()
-            return http.HttpResponseRedirect(redirect(**form.cleaned_data))
-        else:
-            return render(
-                request,
-                template,
-                dict(
-                    form=form,
-                    **context,
-                )
+            if formset.is_valid():
+                if save:
+                    form.save()
+                    formset.save()
+                return http.HttpResponseRedirect(redirect(**form.cleaned_data))
+
+        return render(
+            request,
+            template,
+            dict(
+                form=form,
+                formset=formset,
+                **context,
             )
+        )
+
     else:
         return render(
             request,
             template,
             dict(
-                form=Form(),
+                form=Form(instance=instance),
+                formset=InlineFormSet(instance=instance),
                 **context,
             ),
         )
@@ -43,35 +68,11 @@ def index(request):
         forms.SlugForm,
         template="leagues/index.html",
         redirect=lambda slug, **_: reverse("league", args=[slug]),
-        instance_kwargs={},
         context=dict(
             leagues=leagues,
         ),
         save=False,
     )
-    # if request.method == "POST":
-    #     form = forms.SlugForm(request.POST)
-    #     if form.is_valid():
-    #         slug = form.cleaned_data["slug"]
-    #         return http.HttpResponseRedirect(reverse("league",args=[slug]))
-    #     else:
-    #         return render(
-    #             request,
-    #             "leagues/index.html",
-    #             dict(
-    #                 form=form,
-    #                 leagues=leagues,
-    #             ),
-    #         )
-    # else:
-    #     return render(
-    #         request,
-    #         "leagues/index.html",
-    #         dict(
-    #             form=forms.SlugForm(),
-    #             leagues=leagues,
-    #         ),
-    #     )
 
 
 def league(request, league_slug):
@@ -85,43 +86,12 @@ def league(request, league_slug):
             context=dict(
                 slug=league_slug,
             ),
-            instance_kwargs=dict(
-                slug=league_slug,
-            ),
+            instance=models.League(slug=league_slug),
             redirect=lambda **_: reverse(
                 "league",
                 args=[league_slug],
             ),
         )
-        # if request.method == "POST":
-        #     form = forms.LeagueForm(
-        #         request.POST,
-        #         instance=models.League(slug=league_slug),
-        #     )
-        #     if form.is_valid():
-        #         # Create a new league based on the form
-        #         form.save()
-        #         return http.HttpResponseRedirect(reverse("league", args=[league_slug]))
-        #     else:
-        #         # Show errors for a form filled incorrectly
-        #         return render(
-        #             request,
-        #             "leagues/create_league.html",
-        #             dict(
-        #                 slug=league_slug,
-        #                 form=form,
-        #             ),
-        #         )
-        # else:
-        #     # Provide empty form for creating a new league
-        #     return render(
-        #         request,
-        #         "leagues/create_league.html",
-        #         dict(
-        #             slug=league_slug,
-        #             form=forms.LeagueForm(),
-        #         ),
-        #     )
     else:
         # Show existing league
         return render(
@@ -131,6 +101,23 @@ def league(request, league_slug):
                 league=league,
             )
         )
+
+
+def edit_league(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    return form_view(
+        request,
+        forms.LeagueForm,
+        template="leagues/edit_league.html",
+        context=dict(
+            league=league,
+        ),
+        instance=league,
+        redirect=lambda **_: reverse(
+            "league",
+            args=[league_slug],
+        ),
+    )
 
 
 def show_league_players(request, league_slug):
@@ -146,9 +133,10 @@ def show_league_players(request, league_slug):
         context=dict(
             league=league,
         ),
-        instance_kwargs=dict(
-            league=league,
-        ),
+        instance=models.Player(league=league),
+        # instance_kwargs=dict(
+        #     league=league,
+        # ),
     )
 
 
@@ -165,14 +153,21 @@ def league_matches(request, league_slug):
         context=dict(
             league=league,
         ),
-        instance_kwargs=dict(
-            league=league,
-        ),
+        instance=models.Match(league=league),
+        # instance_kwargs=dict(
+        #     league=league,
+        # ),
+        # InlineFormSet=inlineformset_factory(
+        #     models.Match,
+        #     models.Period,
+        #     fields=["home_points", "away_points"],
+        #     extra=1,
+        # ),
     )
 
 
-def player(request, player_uuid):
-    player = get_object_or_404(models.Player, uuid=player_uuid)
+def player(request, league_slug, player_uuid):
+    player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
     return render(
         request,
         "leagues/player.html",
@@ -182,12 +177,64 @@ def player(request, player_uuid):
     )
 
 
-def match(request, match_uuid):
-    match = get_object_or_404(models.Match, uuid=match_uuid)
-    return render(
+def edit_player(request, league_slug, player_uuid):
+    player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
+    return form_view(
         request,
-        "leagues/match.html",
-        dict(
+        forms.PlayerForm,
+        template="leagues/edit_player.html",
+        redirect=lambda **_: reverse(
+            "player",
+            args=[league_slug, player_uuid],
+        ),
+        context=dict(
+            player=player,
+        ),
+        instance=player,
+    )
+
+def add_match(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    match = models.Match(league=league)
+    return form_view(
+        request,
+        forms.MatchForm,
+        template="leagues/add_match.html",
+        redirect=lambda **_: reverse(
+            "league_matches",
+            args=[league_slug],
+        ),
+        context=dict(
             match=match,
-        )
+        ),
+        instance=match,
+        InlineFormSet=inlineformset_factory(
+            models.Match,
+            models.Period,
+            fields=["home_points", "away_points"],
+            extra=3,
+        ),
+    )
+
+
+def match(request, league_slug, match_uuid):
+    match = get_object_or_404(models.Match, league__slug=league_slug, uuid=match_uuid)
+    return form_view(
+        request,
+        forms.MatchForm,
+        template="leagues/match.html",
+        redirect=lambda **_: reverse(
+            "league_matches",
+            args=[league_slug],
+        ),
+        context=dict(
+            match=match,
+        ),
+        instance=match,
+        InlineFormSet=inlineformset_factory(
+            models.Match,
+            models.Period,
+            fields=["home_points", "away_points"],
+            extra=3,
+        ),
     )

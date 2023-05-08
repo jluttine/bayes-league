@@ -1,0 +1,9 @@
+<a href="{% url 'index' %}">BayesLeague</a>
+
+<h1>{{ league.title }}</h1>
+
+<ul>
+  <li><a href="{% url 'view_players' league.slug %}">Players</a></li>
+  <li><a href="{% url 'view_matches' league.slug %}">Matches</a></li>
+  <li><a href="{% url 'edit_league' league.slug %}">Settings</a></li>
+</ul>

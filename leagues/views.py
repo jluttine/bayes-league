@@ -67,7 +67,7 @@ def index(request):
         request,
         forms.SlugForm,
         template="leagues/index.html",
-        redirect=lambda slug, **_: reverse("league", args=[slug]),
+        redirect=lambda slug, **_: reverse("view_league", args=[slug]),
         context=dict(
             leagues=leagues,
         ),
@@ -75,7 +75,7 @@ def index(request):
     )
 
 
-def league(request, league_slug):
+def view_league(request, league_slug):
     try:
         league = models.League.objects.get(slug=league_slug)
     except models.League.DoesNotExist:
@@ -88,7 +88,7 @@ def league(request, league_slug):
             ),
             instance=models.League(slug=league_slug),
             redirect=lambda **_: reverse(
-                "league",
+                "view_league",
                 args=[league_slug],
             ),
         )
@@ -96,7 +96,7 @@ def league(request, league_slug):
         # Show existing league
         return render(
             request,
-            "leagues/show_league.html",
+            "leagues/view_league.html",
             dict(
                 league=league,
             )
@@ -114,63 +114,51 @@ def edit_league(request, league_slug):
         ),
         instance=league,
         redirect=lambda **_: reverse(
-            "league",
+            "view_league",
             args=[league_slug],
         ),
     )
 
 
-def show_league_players(request, league_slug):
+def view_players(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     return form_view(
         request,
         forms.PlayerForm,
-        template="leagues/show_league_players.html",
+        template="leagues/view_players.html",
         redirect=lambda **_: reverse(
-            "show_league_players",
+            "view_players",
             args=[league_slug],
         ),
         context=dict(
             league=league,
         ),
         instance=models.Player(league=league),
-        # instance_kwargs=dict(
-        #     league=league,
-        # ),
     )
 
 
-def league_matches(request, league_slug):
+def view_matches(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     return form_view(
         request,
         forms.MatchForm,
-        template="leagues/league_matches.html",
+        template="leagues/view_matches.html",
         redirect=lambda **_: reverse(
-            "league_matches",
+            "view_matches",
             args=[league_slug],
         ),
         context=dict(
             league=league,
         ),
         instance=models.Match(league=league),
-        # instance_kwargs=dict(
-        #     league=league,
-        # ),
-        # InlineFormSet=inlineformset_factory(
-        #     models.Match,
-        #     models.Period,
-        #     fields=["home_points", "away_points"],
-        #     extra=1,
-        # ),
     )
 
 
-def player(request, league_slug, player_uuid):
+def view_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
     return render(
         request,
-        "leagues/player.html",
+        "leagues/view_player.html",
         dict(
             player=player,
         )
@@ -184,7 +172,7 @@ def edit_player(request, league_slug, player_uuid):
         forms.PlayerForm,
         template="leagues/edit_player.html",
         redirect=lambda **_: reverse(
-            "player",
+            "view_player",
             args=[league_slug, player_uuid],
         ),
         context=dict(
@@ -193,15 +181,15 @@ def edit_player(request, league_slug, player_uuid):
         instance=player,
     )
 
-def add_match(request, league_slug):
+def create_match(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     match = models.Match(league=league)
     return form_view(
         request,
         forms.MatchForm,
-        template="leagues/add_match.html",
+        template="leagues/create_match.html",
         redirect=lambda **_: reverse(
-            "league_matches",
+            "view_matches",
             args=[league_slug],
         ),
         context=dict(
@@ -217,14 +205,14 @@ def add_match(request, league_slug):
     )
 
 
-def match(request, league_slug, match_uuid):
+def edit_match(request, league_slug, match_uuid):
     match = get_object_or_404(models.Match, league__slug=league_slug, uuid=match_uuid)
     return form_view(
         request,
         forms.MatchForm,
-        template="leagues/match.html",
+        template="leagues/edit_match.html",
         redirect=lambda **_: reverse(
-            "league_matches",
+            "view_matches",
             args=[league_slug],
         ),
         context=dict(

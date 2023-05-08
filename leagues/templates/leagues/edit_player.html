@@ -1,4 +1,4 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'league' player.league.slug %}">{{ player.league.title }}</a> / <a href="{% url 'show_league_players' player.league.slug %}">Players</a> / <a href="{% url 'player' player.league.slug player.uuid %}">{{ player.name }}</a>
+<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' player.league.slug %}">{{ player.league.title }}</a> / <a href="{% url 'view_players' player.league.slug %}">Players</a> / <a href="{% url 'view_player' player.league.slug player.uuid %}">{{ player.name }}</a>
 
 <h1>Edit {{ player.name }}</h1>
 

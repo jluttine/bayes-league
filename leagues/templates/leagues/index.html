@@ -12,6 +12,6 @@ Existing public leagues:
 
 <ul>
 {% for league in leagues %}
-<li><a href={% url "league" league.slug %}>{{ league.title }}</a></li>
+<li><a href={% url "view_league" league.slug %}>{{ league.title }}</a></li>
 {% endfor %}
 </ul>

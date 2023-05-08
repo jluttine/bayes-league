@@ -1,4 +1,4 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url "league" league.slug %}">{{ league.title }}</a>
+<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' league.slug %}">{{ league.title }}</a>
 
 <h1>Matches</h1>
 
@@ -17,7 +17,7 @@
     <tr>
       <td>
         {% for player in match.home_team.all %}
-        <a href="{% url 'player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />
         {% endfor %}
       </td>
       <td>
@@ -25,7 +25,7 @@
       </td>
       <td>
         {% for player in match.away_team.all %}
-        <a href="{% url 'player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />
         {% endfor %}
       </td>
       <td>
@@ -37,10 +37,10 @@
         {% endif %}
 
       </td>
-      <td><a href="{% url 'match' league.slug match.uuid %}">Edit</a></td>
+      <td><a href="{% url 'edit_match' league.slug match.uuid %}">Edit</a></td>
     </tr>
     {% endfor %}
   </tbody>
 </table>
 
-<a href="{% url 'add_match' league.slug %}">Add match</a>
+<a href="{% url 'create_match' league.slug %}">Add match</a>

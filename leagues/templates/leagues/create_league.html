@@ -2,7 +2,7 @@
 
 <h1>Create league under /{{ slug }}</h1>
 
-<form action="{% url 'league' slug %}" method="post">
+<form action="{% url 'view_league' slug %}" method="post">
     {% csrf_token %}
     {{ form }}
     <input type="submit" value="Submit">

@@ -1,0 +1,16 @@
+<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' league.slug %}">{{ league.title }}</a>
+
+<h1>Players</h1>
+
+<ul>
+  {% for player in league.player_set.all %}
+  <li><a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a></li>
+  {% endfor %}
+</ul>
+
+
+<form action="{% url 'view_players' league.slug %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    <input type="submit" value="Add player">
+</form>

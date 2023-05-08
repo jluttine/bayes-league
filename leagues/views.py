@@ -208,6 +208,7 @@ def update_ranking(league):
                 m.total_away_points,
             )
             for m in ms
+            if m.total_home_points is not None
         ],
         len(p2id),
     )

@@ -21,7 +21,7 @@ def calculate_ranking(X, n_players):
     jss_home = [np.array(xi[0], dtype=int) for xi in X]
     jss_away = [np.array(xi[1], dtype=int) for xi in X]
 
-    def neglikelihood(x):
+    def negloglikelihood(x):
         home_x = np.array([
             logsumexp(np.take(x, js))
             for js in jss_home
@@ -36,9 +36,9 @@ def calculate_ranking(X, n_players):
         return -np.sum(logbinom(k_home+k_away, k_home) + k_home*logp + k_away*logq)
 
     res = minimize(
-        neglikelihood,
+        negloglikelihood,
         x0=np.zeros(n_players),
-        jac=grad(neglikelihood),
+        jac=grad(negloglikelihood),
     )
 
     # Translate minimum ranking to 0 and transform from natural logarithm to log2

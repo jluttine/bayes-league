@@ -5,15 +5,6 @@ from scipy.optimize import minimize
 from jax import grad
 
 
-def logfactorial(x):
-    """log(x!)"""
-    return gammaln(x + 1)
-
-
-def logbinom(n, k):
-    return logfactorial(n) - logfactorial(k) - logfactorial(n - k)
-
-
 def calculate_ranking(X, n_players):
     # Parse points
     k_home = np.array([k for (_, _, k, _) in X])
@@ -33,7 +24,7 @@ def calculate_ranking(X, n_players):
         logz = np.logaddexp(home_x, away_x)
         logp = home_x - logz
         logq = away_x - logz
-        return -np.sum(logbinom(k_home+k_away, k_home) + k_home*logp + k_away*logq)
+        return -np.sum(k_home*logp + k_away*logq)
 
     res = minimize(
         negloglikelihood,

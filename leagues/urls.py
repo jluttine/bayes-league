@@ -54,4 +54,9 @@ urlpatterns = [
         views.edit_match,
         name="edit_match",
     ),
+    path(
+        "league/<slug:league_slug>/ranking/",
+        views.view_ranking,
+        name="view_ranking",
+    ),
 ]

@@ -5,6 +5,7 @@ from django.forms import inlineformset_factory
 
 from . import models
 from . import forms
+from . import ranking
 
 
 class DummyInlineFormSet():
@@ -181,6 +182,53 @@ def edit_player(request, league_slug, player_uuid):
         instance=player,
     )
 
+
+def update_ranking(league):
+    ms = (
+        models.Match.objects.with_total_points()
+        .prefetch_related("home_team")
+        .prefetch_related("away_team")
+        .filter(league=league)
+    )
+    ps = models.Player.objects.filter(league=league)
+    p2id = {
+        p.uuid: i
+        for (i, p) in enumerate(ps)
+    }
+    rs = ranking.calculate_ranking(
+        [
+            (
+                # FIXME: One should be able to avoid reading Player table
+                # because we only need some keys to identify the players and
+                # such keys should be in Match table already. Then, remove
+                # prefetch_related above.
+                [p2id[p.uuid] for p in m.home_team.all()],
+                [p2id[p.uuid] for p in m.away_team.all()],
+                m.total_home_points,
+                m.total_away_points,
+            )
+            for m in ms
+        ],
+        len(p2id),
+    )
+    rnk = models.Ranking(league=league)
+    rnk.save()
+    models.RankingScore.objects.bulk_create(
+        [
+            models.RankingScore(
+                ranking=rnk,
+                player=ps[i],
+                score=r,
+            )
+            for (i, r) in enumerate(rs)
+        ]
+    )
+    return reverse(
+        "view_matches",
+        args=[league.slug],
+    )
+
+
 def create_match(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     match = models.Match(league=league)
@@ -188,10 +236,7 @@ def create_match(request, league_slug):
         request,
         forms.MatchForm,
         template="leagues/create_match.html",
-        redirect=lambda **_: reverse(
-            "view_matches",
-            args=[league_slug],
-        ),
+        redirect=lambda **_: update_ranking(league),
         context=dict(
             match=match,
         ),
@@ -206,15 +251,13 @@ def create_match(request, league_slug):
 
 
 def edit_match(request, league_slug, match_uuid):
-    match = get_object_or_404(models.Match, league__slug=league_slug, uuid=match_uuid)
+    league = get_object_or_404(models.League, slug=league_slug)
+    match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
     return form_view(
         request,
         forms.MatchForm,
         template="leagues/edit_match.html",
-        redirect=lambda **_: reverse(
-            "view_matches",
-            args=[league_slug],
-        ),
+        redirect=lambda **_: update_ranking(league),
         context=dict(
             match=match,
         ),
@@ -225,4 +268,17 @@ def edit_match(request, league_slug, match_uuid):
             fields=["home_points", "away_points"],
             extra=3,
         ),
+    )
+
+
+def view_ranking(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    ranking = league.ranking_set.last()
+    return render(
+        request,
+        "leagues/view_ranking.html",
+        dict(
+            league=league,
+            ranking=ranking,
+        )
     )

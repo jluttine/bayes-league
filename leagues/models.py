@@ -80,12 +80,6 @@ class Match(models.Model):
     def __str__(self):
         return f"{self.uuid}"
 
-    def total_score(self):
-        self.period_set.objects.all()
-        return (
-
-        )
-
 
 class Period(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
@@ -95,7 +89,7 @@ class Period(models.Model):
 
 class Ranking(models.Model):
     league = models.ForeignKey(League, on_delete=models.CASCADE)
-    players = models.ManyToManyField(Player)
+    players = models.ManyToManyField(Player, through="RankingScore")
     created_at = models.DateTimeField(auto_now_add=True)
     uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
 

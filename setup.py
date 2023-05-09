@@ -6,7 +6,7 @@ if __name__ == "__main__":
         install_requires=[
             "numpy",
             "scipy",
-            "jax",
+            "autograd",
         ],
         packages=find_packages(),
         scripts=["manage.py"],

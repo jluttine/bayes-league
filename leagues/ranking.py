@@ -1,8 +1,11 @@
 import numpy
-import jax.numpy as np
-from jax.scipy.special import gammaln, logsumexp
 from scipy.optimize import minimize
-from jax import grad
+
+# Would be nice to use jax instead of autograd but unfortunately it doesn't work
+# on all machines
+import autograd.numpy as np
+from autograd.scipy.special import gammaln, logsumexp
+from autograd import grad
 
 
 def calculate_ranking(X, n_players):
@@ -17,14 +20,16 @@ def calculate_ranking(X, n_players):
             # Logarithmic scale adding
             #np.sum(np.take(x, js))
             # Linear scale adding
-            logsumexp(np.take(x, js))
+            logsumexp(x[js])
+            #logsumexp(np.take(x, js))
             for js in jss_home
         ])
         away_x = np.array([
             # Logarithmic scale adding
             #np.sum(np.take(x, js))
             # Linear scale adding
-            logsumexp(np.take(x, js))
+            logsumexp(x[js])
+            #logsumexp(np.take(x, js))
             for js in jss_away
         ])
         logz = np.logaddexp(home_x, away_x)

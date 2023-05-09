@@ -8,8 +8,7 @@ mkShell {
       django
       numpy
       scipy
-      jax
-      jaxlib
+      autograd
       ipython
     ]))
   ];

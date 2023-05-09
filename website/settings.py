@@ -22,6 +22,8 @@ if json_file is not None:
 else:
     json_settings = {}
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = json_settings.get("DEBUG", True)
 
 def read_secret_key():
     secret_key_file = json_settings.get("SECRET_KEY_FILE", None)
@@ -29,11 +31,13 @@ def read_secret_key():
         with open(secret_key_file) as f:
             return f.read()
     else:
-        return json_settings.get(
-            "SECRET_KEY",
-            'django-insecure-ukmj18m(eti9_j@1k8x4wvm(s#!*hbxa8k=_)z+vj24cwe8+yv'
-        )
-
+        try:
+            json_settings["SECRET_KEY"]
+        except KeyError:
+            if DEBUG:
+                return 'django-insecure-ukmj18m(eti9_j@1k8x4wvm(s#!*hbxa8k=_)z+vj24cwe8+yv'
+            else:
+                raise Exception("Define SECRET_KEY in JSON")
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,9 +47,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = read_secret_key()
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = json_settings.get("DEBUG", True)
 
 ALLOWED_HOSTS = json_settings.get("ALLOWED_HOSTS", [])
 

@@ -10,23 +10,44 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
+import json
+import os
 from pathlib import Path
+
+
+json_file = os.environ.get("BAYESLEAGUE_SETTINGS_JSON", None)
+if json_file is not None:
+    with open(json_file) as f:
+        json_settings = json.loads(f.read())
+else:
+    json_settings = {}
+
+
+def read_secret_key():
+    secret_key_file = json_settings.get("SECRET_KEY_FILE", None)
+    if secret_key_file is not None:
+        with open(secret_key_file) as f:
+            return f.read()
+    else:
+        return json_settings.get(
+            "SECRET_KEY",
+            'django-insecure-ukmj18m(eti9_j@1k8x4wvm(s#!*hbxa8k=_)z+vj24cwe8+yv'
+        )
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-ukmj18m(eti9_j@1k8x4wvm(s#!*hbxa8k=_)z+vj24cwe8+yv'
+SECRET_KEY = read_secret_key()
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = json_settings.get("DEBUG", True)
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = json_settings.get("ALLOWED_HOSTS", [])
 
 # Application definition
 
@@ -74,12 +95,15 @@ WSGI_APPLICATION = 'website.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+DATABASES = json_settings.get(
+    "DATABASES",
+    {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+)
 
 
 # Password validation
@@ -104,9 +128,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = json_settings.get("LANGUAGE_CODE", 'en-us')
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = json_settings.get("TIME_ZONE", 'UTC')
 
 USE_I18N = True
 

@@ -14,10 +14,16 @@ def calculate_ranking(X, n_players):
 
     def negloglikelihood(x):
         home_x = np.array([
+            # Logarithmic scale adding
+            #np.sum(np.take(x, js))
+            # Linear scale adding
             logsumexp(np.take(x, js))
             for js in jss_home
         ])
         away_x = np.array([
+            # Logarithmic scale adding
+            #np.sum(np.take(x, js))
+            # Linear scale adding
             logsumexp(np.take(x, js))
             for js in jss_away
         ])
@@ -32,5 +38,7 @@ def calculate_ranking(X, n_players):
         jac=grad(negloglikelihood),
     )
 
-    # Translate minimum ranking to 0 and transform from natural logarithm to log2
-    return 1000 * np.exp(res.x - numpy.amin(res.x))
+    # Logarithmic scale scores
+    #return 10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2)
+    # Linear scale scores
+    return 10 * np.exp(res.x - numpy.amin(res.x))

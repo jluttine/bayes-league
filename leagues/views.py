@@ -2,6 +2,7 @@ from django.shortcuts import render, get_object_or_404
 from django import http
 from django.urls import reverse
 from django.forms import inlineformset_factory
+from django.conf import settings
 
 from . import models
 from . import forms
@@ -71,37 +72,38 @@ def index(request):
         redirect=lambda slug, **_: reverse("view_league", args=[slug]),
         context=dict(
             leagues=leagues,
+            debug=getattr(settings, "DEBUG", False),
         ),
         save=False,
     )
 
 
 def view_league(request, league_slug):
-    try:
-        league = models.League.objects.get(slug=league_slug)
-    except models.League.DoesNotExist:
-        return form_view(
-            request,
-            forms.LeagueForm,
-            template="leagues/create_league.html",
-            context=dict(
-                slug=league_slug,
-            ),
-            instance=models.League(slug=league_slug),
-            redirect=lambda **_: reverse(
-                "view_league",
-                args=[league_slug],
-            ),
+    league = get_object_or_404(models.League, slug=league_slug)
+    return render(
+        request,
+        "leagues/view_league.html",
+        dict(
+            league=league,
         )
-    else:
-        # Show existing league
-        return render(
-            request,
-            "leagues/view_league.html",
-            dict(
-                league=league,
-            )
-        )
+    )
+
+
+def create_league(request, league_slug):
+    raise NotImplementedError()
+    return form_view(
+        request,
+        forms.LeagueForm,
+        template="leagues/create_league.html",
+        context=dict(
+            slug=league_slug,
+        ),
+        instance=models.League(slug=league_slug),
+        redirect=lambda **_: reverse(
+            "view_league",
+            args=[league_slug],
+        ),
+    )
 
 
 def edit_league(request, league_slug):

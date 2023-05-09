@@ -1,17 +1,17 @@
 <h1>Bayes League</h1>
 
-Create a new league:
+<p>
+<b>If you want to create a league, please contact the web site administrator.</b>
+</p>
 
-<form action="{% url 'index' %}" method="post">
-    {% csrf_token %}
-    {{ form }}
-    <input type="submit" value="Create">
-</form>
-
-Existing public leagues:
+{% if debug %}
+<p>
+Existing leagues (only visible in debug mode):
 
 <ul>
 {% for league in leagues %}
 <li><a href={% url "view_league" league.slug %}>{{ league.title }}</a></li>
 {% endfor %}
 </ul>
+</p>
+{% endif %}

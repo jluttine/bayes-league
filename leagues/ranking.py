@@ -33,4 +33,4 @@ def calculate_ranking(X, n_players):
     )
 
     # Translate minimum ranking to 0 and transform from natural logarithm to log2
-    return 1000 + 1000 * (res.x - numpy.amin(res.x)) / numpy.log(2)
+    return 1000 * np.exp(res.x - numpy.amin(res.x))

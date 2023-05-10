@@ -8,6 +8,9 @@ tmp/
 *.egg
 *.egg-info
 build
+dist
 htmlcov
+
+result
 
 *.sqlite3

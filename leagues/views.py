@@ -68,7 +68,7 @@ def index(request):
     leagues = models.League.objects.all()
     return render(
         request,
-        "leagues/indexio.html",
+        "leagues/index.html",
         dict(
             leagues=leagues,
         )

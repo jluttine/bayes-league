@@ -63,18 +63,15 @@ def form_view(request, Form, template, redirect, context={}, save=True,
             ),
         )
 
+
 def index(request):
     leagues = models.League.objects.all()
-    return form_view(
+    return render(
         request,
-        forms.SlugForm,
-        template="leagues/index.html",
-        redirect=lambda slug, **_: reverse("view_league", args=[slug]),
-        context=dict(
+        "leagues/indexio.html",
+        dict(
             leagues=leagues,
-            debug=getattr(settings, "DEBUG", False),
-        ),
-        save=False,
+        )
     )
 
 

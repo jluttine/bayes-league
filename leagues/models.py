@@ -32,6 +32,7 @@ class Player(models.Model):
     )
 
     class Meta:
+        ordering = ["name"]
         constraints = [
             # In a league, all players have different names
             models.UniqueConstraint(

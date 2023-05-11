@@ -1,6 +1,7 @@
 import uuid
 
 from django.db import models
+from django.utils import timezone
 
 
 class League(models.Model):
@@ -26,7 +27,10 @@ class Player(models.Model):
     name = models.CharField(
         max_length=50,
     )
-    created_at = models.DateTimeField(auto_now_add=True, editable=False)
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        editable=False,
+    )
     uuid = models.UUIDField(
         unique=True,
         default=uuid.uuid4,
@@ -74,7 +78,10 @@ class Match(models.Model):
         Player,
         related_name="away_match_set",
     )
-    datetime = models.DateTimeField(auto_now_add=True)
+    datetime = models.DateTimeField(
+        # NOTE: Don't use auto_now_add so the datetime can be edited
+        default=timezone.now,
+    )
     uuid = models.UUIDField(
         unique=True,
         default=uuid.uuid4,

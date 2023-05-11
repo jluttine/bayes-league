@@ -5,6 +5,7 @@
 <table>
   <thead>
     <tr>
+      <th>Time</th>
       <th>Home team</th>
       <th></th>
       <th>Away team</th>
@@ -15,6 +16,7 @@
   <tbody>
     {% for match in league.match_set.with_total_points %}
     <tr>
+      <td>{{ match.datetime|date:'Y-m-d H:i' }}</td>
       <td>
         {% for player in match.home_team.all %}
         <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />

@@ -58,7 +58,7 @@ class MatchManager(models.Manager):
             period_count=models.Count("period"),
             total_home_points=models.Sum("period__home_points"),
             total_away_points=models.Sum("period__away_points"),
-        )
+        ).order_by("-datetime")  # Meta.ordering not obeyed, so sort explicitly
 
 
 class Match(models.Model):

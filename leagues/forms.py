@@ -1,4 +1,4 @@
-from django.forms import ModelForm
+from django.forms import ModelForm, ModelMultipleChoiceField
 from django.core.exceptions import ValidationError
 
 from . import models
@@ -25,6 +25,11 @@ class PlayerForm(ModelForm):
         fields = ["name"]
 
 
+class PlayerMultipleChoiceField(ModelMultipleChoiceField):
+    def label_from_instance(self, member):
+        return f"{member.name}"
+
+
 class MatchForm(ModelForm):
 
     class Meta:
@@ -34,8 +39,12 @@ class MatchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         league = self.instance.league
-        self.fields["home_team"].queryset = models.Player.objects.filter(league=league)
-        self.fields["away_team"].queryset = models.Player.objects.filter(league=league)
+        self.fields["home_team"] = PlayerMultipleChoiceField(
+            queryset = models.Player.objects.filter(league=league)
+        )
+        self.fields["away_team"] = PlayerMultipleChoiceField(
+            queryset = models.Player.objects.filter(league=league)
+        )
         return
 
     def clean(self):

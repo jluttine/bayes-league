@@ -123,12 +123,18 @@ def edit_league(request, league_slug):
 
 def view_players(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
-    return render(
+    return form_view(
         request,
-        "leagues/view_players.html",
-        dict(
+        forms.PlayerForm,
+        template="leagues/view_players.html",
+        redirect=lambda **_: reverse(
+            "view_players",
+            args=[league_slug],
+        ),
+        context=dict(
             league=league,
         ),
+        instance=models.Player(league=league),
     )
 
 

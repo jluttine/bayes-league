@@ -71,6 +71,7 @@ def index(request):
         "leagues/index.html",
         dict(
             leagues=leagues,
+            debug=settings.DEBUG,
         )
     )
 

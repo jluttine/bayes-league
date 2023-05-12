@@ -8,6 +8,18 @@ from autograd.scipy.special import gammaln, logsumexp
 from autograd import grad
 
 
+def team_scores(x, jss):
+    return np.array([
+        # Geometric mean, that is, arithmetic mean on logarithmic scale
+        np.mean(x[js])
+        # Product, that is, sum on logarithmic scale. Geometric mean is better.
+        #np.sum(x[js])
+        # Adding
+        #logsumexp(x[js])
+        for js in jss
+    ])
+
+
 def calculate_ranking(X, n_players):
     # Parse points
     k_home = np.array([k for (_, _, k, _) in X])
@@ -16,21 +28,8 @@ def calculate_ranking(X, n_players):
     jss_away = [np.array(xi[1], dtype=int) for xi in X]
 
     def negloglikelihood(x):
-        home_x = np.array([
-            # Logarithmic scale adding
-            np.sum(x[js])
-            # Linear scale adding
-            #logsumexp(x[js])
-            #logsumexp(np.take(x, js))
-            for js in jss_home
-        ])
-        away_x = np.array([
-            # Logarithmic scale adding
-            np.sum(x[js])
-            # Linear scale adding
-            #logsumexp(x[js])
-            for js in jss_away
-        ])
+        home_x = team_scores(x, jss_home)
+        away_x = team_scores(x, jss_away)
         logz = np.logaddexp(home_x, away_x)
         logp = home_x - logz
         logq = away_x - logz

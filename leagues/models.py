@@ -99,6 +99,10 @@ class Period(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     home_points = models.PositiveIntegerField()
     away_points = models.PositiveIntegerField()
+    datetime = models.DateTimeField(
+        # NOTE: Don't use auto_now_add so the datetime can be edited
+        default=timezone.now,
+    )
 
 
 class Ranking(models.Model):

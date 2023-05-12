@@ -8,7 +8,7 @@ To test locally, run the following commands in the project root directory (where
 Install dependencies (Django) in your preferred way. For instance:
 
 ``` shell
-pip install django jax scipy
+pip install django autograd scipy
 ```
 
 

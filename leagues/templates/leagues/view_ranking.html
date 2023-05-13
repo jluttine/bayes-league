@@ -2,22 +2,7 @@
 
 <h1>Ranking</h1>
 
-<table>
-  <thead>
-    <tr>
-      <th>Player</th>
-      <th>Score</th>
-    </tr>
-  </thead>
-  <tbody>
-    {% for score in ranking.rankingscore_set.all %}
-    <tr>
-      <td><a href="{% url 'view_player' league.slug score.player.uuid %}">{{ score.player.name }}</a></td>
-      <td>{{ score.score|floatformat:0 }}</td>
-    </tr>
-    {% endfor %}
-  </tbody>
-</table>
+{% include 'leagues/table_ranking.html' %}
 
 <p><b>A brief explanation of the ranking scores:</b></p>
 

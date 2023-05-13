@@ -8,3 +8,15 @@
   <li><a href="{% url 'view_ranking' league.slug %}">Ranking</a></li>
   <li><a href="{% url 'edit_league' league.slug %}">Settings</a></li>
 </ul>
+
+<h2>Ranking</h2>
+
+{% include 'leagues/table_ranking.html' %}
+
+<h2>Matches</h2>
+
+<p>
+<a href="{% url 'create_match' league.slug %}">Add match</a>
+</p>
+
+{% include 'leagues/table_matches.html' %}

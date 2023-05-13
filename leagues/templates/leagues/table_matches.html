@@ -1,0 +1,42 @@
+<table>
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Home team</th>
+      <th></th>
+      <th>Away team</th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for match in league.match_set.with_total_points %}
+    <tr>
+      <td>{{ match.datetime|date:'Y-m-d H:i' }}</td>
+      <td>
+        {% for player in match.home_team.all %}
+        <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        {% endfor %}
+      </td>
+      <td>
+        -
+      </td>
+      <td>
+        {% for player in match.away_team.all %}
+        <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        {% endfor %}
+      </td>
+      <td>
+        {% if match.period_count > 0 %}
+        <b>{{ match.total_home_points }} - {{ match.total_away_points }}</b>
+        {% if match.period_count > 1 %}
+        ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
+        {% endif %}
+        {% endif %}
+
+      </td>
+      <td><a href="{% url 'edit_match' league.slug match.uuid %}">Edit</a></td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>

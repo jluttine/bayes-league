@@ -83,6 +83,7 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
+            ranking=league.ranking_set.last(),
         )
     )
 
@@ -219,7 +220,7 @@ def update_ranking(league):
         ]
     )
     return reverse(
-        "view_matches",
+        "view_league",
         args=[league.slug],
     )
 

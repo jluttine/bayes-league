@@ -16,7 +16,11 @@
 <h2>Matches</h2>
 
 <p>
+<a href="{% url 'create_stage' league.slug %}">Add stage</a>
+</p>
+
+<p>
 <a href="{% url 'create_match' league.slug %}">Add match</a>
 </p>
 
-{% include 'leagues/table_matches.html' %}
+{% include 'leagues/table_matches_grouped.html' %}

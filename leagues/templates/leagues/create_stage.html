@@ -1,0 +1,10 @@
+<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' stage.league.slug %}">{{ stage.league.title }}</a>
+
+<h1>Add stage</h1>
+
+<form action="{% url 'create_stage' stage.league.slug %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {{ formset.as_p }}
+    <input type="submit" value="Save">
+</form>

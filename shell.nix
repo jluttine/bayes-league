@@ -11,6 +11,7 @@ mkShell {
       scipy
       autograd
       ipython
+      django-ordered-model
     ]))
   ];
 }

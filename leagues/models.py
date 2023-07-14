@@ -2,7 +2,8 @@ import uuid
 
 from django.db import models
 from django.utils import timezone
-
+from django.utils.text import slugify
+from ordered_model.models import OrderedModel
 
 class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
@@ -14,6 +15,37 @@ class League(models.Model):
 
     def __str__(self):
         return f"{self.slug} - {self.title}"
+
+
+class Stage(OrderedModel):
+    league = models.ForeignKey(
+        League,
+        on_delete=models.CASCADE,
+        # Don't edit the league because otherwise existing stages might include
+        # matches from different leagues
+        editable=False,
+    )
+    name = models.CharField(
+        max_length=50,
+    )
+    slug = models.SlugField()
+
+    class Meta:
+        # The ordering is defined in OrderedModel base class
+        ordering = ('order',)
+        constraints = [
+            models.UniqueConstraint(
+                fields=["league", "slug"],
+                name="unique_stage_slugs_in_league",
+            ),
+        ]
+
+    def clean(self):
+        self.slug = slugify(self.name)
+        return
+
+    def __str__(self):
+        return self.name
 
 
 class Player(models.Model):
@@ -58,7 +90,7 @@ class MatchManager(models.Manager):
             period_count=models.Count("period"),
             total_home_points=models.Sum("period__home_points"),
             total_away_points=models.Sum("period__away_points"),
-        ).order_by("-datetime")  # Meta.ordering not obeyed, so sort explicitly
+        ).order_by("stage", "-datetime")  # Meta.ordering not obeyed, so sort explicitly
 
 
 class Match(models.Model):
@@ -69,6 +101,13 @@ class Match(models.Model):
         # Don't edit the league because otherwise existing matches might include
         # players from different leagues
         editable=False,
+    )
+    stage = models.ForeignKey(
+        Stage,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        default=None,
     )
     home_team = models.ManyToManyField(
         Player,

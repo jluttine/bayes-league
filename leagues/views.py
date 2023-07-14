@@ -225,6 +225,24 @@ def update_ranking(league):
     )
 
 
+def create_stage(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    stage = models.Stage(league=league)
+    return form_view(
+        request,
+        forms.StageForm,
+        template="leagues/create_stage.html",
+        redirect=lambda **_: reverse(
+            "view_league",
+            args=[league_slug],
+        ),
+        context=dict(
+            stage=stage,
+        ),
+        instance=stage,
+    )
+
+
 def create_match(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     match = models.Match(league=league)

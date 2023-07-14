@@ -30,11 +30,18 @@ class PlayerMultipleChoiceField(ModelMultipleChoiceField):
         return f"{member.name}"
 
 
+class StageForm(ModelForm):
+
+    class Meta:
+        model = models.Stage
+        fields = ["name"]
+
+
 class MatchForm(ModelForm):
 
     class Meta:
         model = models.Match
-        fields = ["home_team", "away_team"]
+        fields = ["stage", "home_team", "away_team"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

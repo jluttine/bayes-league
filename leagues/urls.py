@@ -35,6 +35,11 @@ urlpatterns = [
         name="edit_player",
     ),
     path(
+        "league/<slug:league_slug>/stages/add/",
+        views.create_stage,
+        name="create_stage",
+    ),
+    path(
         "league/<slug:league_slug>/matches/",
         views.view_matches,
         name="view_matches",

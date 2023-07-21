@@ -1,0 +1,51 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}My amazing site{% endblock %}</title>
+    <link rel="stylesheet" href="https://unpkg.com/bulmaswatch/flatly/bulmaswatch.min.css">
+    <script type="text/javascript" src="{% static 'navbar-burger.js' %}"></script>
+  </head>
+
+  <body>
+    <nav class="navbar is-primary" role="navigation" aria-label="main navigation">
+      <div class="container">
+        <div class="navbar-brand">
+          <a role="button" class="navbar-burger" data-target="navbarMenu" aria-label="menu" aria-expanded="false">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </a>
+        </div>
+        <div id="navbarMenu" class="navbar-menu">
+          <div class="navbar-start">
+            <a class="navbar-item" href="{% url 'view_league' league.slug %}">
+              {{ league.title }}
+            </a>
+            <a class="navbar-item" href="{% url 'view_ranking' league.slug %}">
+              Ranking
+            </a>
+            <a class="navbar-item" href="{% url 'view_matches' league.slug %}">
+              Matches
+            </a>
+            <a class="navbar-item" href="{% url 'view_players' league.slug %}">
+              Players
+            </a>
+            <a class="navbar-item" href="{% url 'edit_league' league.slug %}">
+              Settings
+            </a>
+          </div>
+
+        </div>
+      </div>
+    </nav>
+
+    <div class="content container" id="content">
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+
+</html>

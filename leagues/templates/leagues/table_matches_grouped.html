@@ -1,9 +1,9 @@
 {% regroup league.match_set.with_total_points by stage as stage_groups %}
 {% for stage in stage_groups %}
 {% if stage.grouper.name != None %}
-<h3>{{ stage.grouper }}</h3>
+<h3><a href="{% url 'view_stage' stage.grouper.league.slug stage.grouper.slug %}">{{ stage.grouper }}</a></h3>
 {% endif %}
-<table>
+<table class="table is-striped">
   <thead>
     <tr>
       <th>Time</th>

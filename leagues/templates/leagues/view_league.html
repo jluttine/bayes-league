@@ -1,13 +1,8 @@
-<a href="{% url 'index' %}">BayesLeague</a>
+{% extends "leagues/base.html" %}
+
+{% block content %}
 
 <h1>{{ league.title }}</h1>
-
-<ul>
-  <li><a href="{% url 'view_players' league.slug %}">Players</a></li>
-  <li><a href="{% url 'view_matches' league.slug %}">Matches</a></li>
-  <li><a href="{% url 'view_ranking' league.slug %}">Ranking</a></li>
-  <li><a href="{% url 'edit_league' league.slug %}">Settings</a></li>
-</ul>
 
 <h2>Ranking</h2>
 
@@ -16,11 +11,13 @@
 <h2>Matches</h2>
 
 <p>
-<a href="{% url 'create_stage' league.slug %}">Add stage</a>
+<a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
 </p>
 
 <p>
-<a href="{% url 'create_match' league.slug %}">Add match</a>
+<a class="button is-primary" href="{% url 'create_match' league.slug %}">Add match</a>
 </p>
 
 {% include 'leagues/table_matches_grouped.html' %}
+
+{% endblock %}

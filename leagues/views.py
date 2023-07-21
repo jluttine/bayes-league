@@ -156,6 +156,7 @@ def view_player(request, league_slug, player_uuid):
         request,
         "leagues/view_player.html",
         dict(
+            league=player.league,
             player=player,
         )
     )
@@ -172,6 +173,7 @@ def edit_player(request, league_slug, player_uuid):
             args=[league_slug, player_uuid],
         ),
         context=dict(
+            league=player.league,
             player=player,
         ),
         instance=player,
@@ -269,6 +271,7 @@ def create_match(request, league_slug):
         template="leagues/create_match.html",
         redirect=lambda **_: update_ranking(league),
         context=dict(
+            league=league,
             match=match,
         ),
         instance=match,
@@ -290,6 +293,7 @@ def edit_match(request, league_slug, match_uuid):
         template="leagues/edit_match.html",
         redirect=lambda **_: update_ranking(league),
         context=dict(
+            league=league,
             match=match,
         ),
         instance=match,

@@ -1,5 +1,6 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' league.slug %}">{{ league.title }}</a>
+{% extends "leagues/base.html" %}
 
+{% block content %}
 <h1>Players</h1>
 
 <ul>
@@ -12,5 +13,7 @@
 <form action="{% url 'view_players' league.slug %}" method="post">
     {% csrf_token %}
     {{ form }}
-    <input type="submit" value="Add player">
+    <input class="button is-primary" type="submit" value="Add player">
 </form>
+
+{% endblock %}

@@ -1,5 +1,6 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' match.league.slug %}">{{ match.league.title }}</a> / <a href="{% url 'view_matches' match.league.slug %}">Matches</a>
+{% extends "leagues/base.html" %}
 
+{% block content %}
 <h1>Edit match</h1>
 
 <form action="{% url 'edit_match' match.league.slug match.uuid %}" method="post">
@@ -8,3 +9,4 @@
     {{ formset.as_p }}
     <input type="submit" value="Save">
 </form>
+{% endblock %}

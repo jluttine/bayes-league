@@ -1,10 +1,12 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' stage.league.slug %}">{{ stage.league.title }}</a>
+{% extends "leagues/base.html" %}
 
+{% block content %}
 <h1>Add stage</h1>
 
-<form action="{% url 'create_stage' stage.league.slug %}" method="post">
+<form action="{% url 'create_stage' league.slug %}" method="post">
     {% csrf_token %}
     {{ form.as_p }}
     {{ formset.as_p }}
-    <input type="submit" value="Save">
+    <input class="button is-primary" type="submit" value="Save">
 </form>
+{% endblock %}

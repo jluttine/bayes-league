@@ -1,5 +1,6 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' league.slug %}">{{ league.title }}</a>
+{% extends "leagues/base.html" %}
 
+{% block content %}
 <h1>Ranking</h1>
 
 {% include 'leagues/table_ranking.html' %}
@@ -25,3 +26,4 @@
 </p>
 
 <p>Note that this works only when the number of players in both teams are equal.</p>
+{% endblock %}

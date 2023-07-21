@@ -1,9 +1,11 @@
-<a href="{% url 'index' %}">BayesLeague</a> / <a href="{% url 'view_league' league.slug %}">{{ league.title }}</a>
+{% extends "leagues/base.html" %}
 
+{% block content %}
 <h1>Matches</h1>
 
 <p>
-<a href="{% url 'create_match' league.slug %}">Add match</a>
+<a class="button is-primary" href="{% url 'create_match' league.slug %}">Add match</a>
 </p>
 
-{% include 'leagues/table_matches.html' %}
+{% include 'leagues/table_matches_grouped.html' %}
+{% endblock %}

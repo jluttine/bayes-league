@@ -237,9 +237,26 @@ def create_stage(request, league_slug):
             args=[league_slug],
         ),
         context=dict(
+            league=stage.league,
             stage=stage,
         ),
         instance=stage,
+    )
+
+
+def view_stage(request, league_slug, stage_slug):
+    stage = get_object_or_404(
+        models.Stage,
+        league__slug=league_slug,
+        slug=stage_slug,
+    )
+    return render(
+        request,
+        "leagues/view_stage.html",
+        dict(
+            league=stage.league,
+            stage=stage,
+        )
     )
 
 

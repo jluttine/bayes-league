@@ -40,6 +40,11 @@ urlpatterns = [
         name="create_stage",
     ),
     path(
+        "league/<slug:league_slug>/stages/view/<slug:stage_slug>/",
+        views.view_stage,
+        name="view_stage",
+    ),
+    path(
         "league/<slug:league_slug>/matches/",
         views.view_matches,
         name="view_matches",

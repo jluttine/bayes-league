@@ -1,0 +1,12 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>{{ stage.name }}</h1>
+
+<h2>Ranking</h2>
+
+
+<h2>Matches</h2>
+
+{% include 'leagues/table_matches_grouped.html' %}
+{% endblock %}

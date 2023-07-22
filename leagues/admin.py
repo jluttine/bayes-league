@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import League, Player, Match, Ranking, RankingScore, Stage, Period
+from .models import League, Player, Match, Stage, Period
 
 
 class PeriodAdminInline(admin.TabularInline):
@@ -17,5 +17,3 @@ admin.site.register(League)
 admin.site.register(Stage)
 admin.site.register(Player)
 admin.site.register(Match, MatchAdmin)
-admin.site.register(Ranking)
-admin.site.register(RankingScore)

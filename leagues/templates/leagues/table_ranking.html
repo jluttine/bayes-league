@@ -6,10 +6,10 @@
     </tr>
   </thead>
   <tbody>
-    {% for score in ranking.rankingscore_set.all %}
+    {% for p in players %}
     <tr>
-      <td><a href="{% url 'view_player' league.slug score.player.uuid %}">{{ score.player.name }}</a></td>
-      <td>{{ score.score|floatformat:0 }}</td>
+      <td><a href="{% url 'view_player' league.slug p.uuid %}">{{ p.name }}</a></td>
+      <td>{% if p.score is None %}-{% else %}{{ p.score|floatformat:0 }}{% endif %}</td>
     </tr>
     {% endfor %}
   </tbody>

@@ -83,7 +83,7 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
-            ranking=league.ranking_set.last(),
+            players=league.player_set.all().order_by("-score"),
         )
     )
 
@@ -209,18 +209,9 @@ def update_ranking(league):
         ],
         len(p2id),
     )
-    rnk = models.Ranking(league=league)
-    rnk.save()
-    models.RankingScore.objects.bulk_create(
-        [
-            models.RankingScore(
-                ranking=rnk,
-                player=ps[i],
-                score=r,
-            )
-            for (i, r) in enumerate(rs)
-        ]
-    )
+    for (p, r) in zip(ps, rs):
+        p.score = r
+    models.Player.objects.bulk_update(ps, ["score"])
     return reverse(
         "view_league",
         args=[league.slug],
@@ -308,12 +299,11 @@ def edit_match(request, league_slug, match_uuid):
 
 def view_ranking(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
-    ranking = league.ranking_set.last()
     return render(
         request,
         "leagues/view_ranking.html",
         dict(
             league=league,
-            ranking=ranking,
+            players=league.player_set.all().order_by("-score"),
         )
     )

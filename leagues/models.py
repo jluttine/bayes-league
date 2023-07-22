@@ -29,6 +29,10 @@ class Stage(OrderedModel):
         max_length=50,
     )
     slug = models.SlugField()
+    ranking = models.ManyToManyField(
+        "Player",
+        through="RankingScore",
+    )
 
     class Meta:
         # The ordering is defined in OrderedModel base class
@@ -67,6 +71,11 @@ class Player(models.Model):
         unique=True,
         default=uuid.uuid4,
         editable=False,
+    )
+    score = models.FloatField(
+        blank=True,
+        null=True,
+        default=None,
     )
 
     class Meta:
@@ -144,23 +153,16 @@ class Period(models.Model):
     )
 
 
-class Ranking(models.Model):
-    league = models.ForeignKey(League, on_delete=models.CASCADE)
-    players = models.ManyToManyField(Player, through="RankingScore")
-    created_at = models.DateTimeField(auto_now_add=True)
-    uuid = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
-
-
 class RankingScore(models.Model):
-    ranking = models.ForeignKey(Ranking, on_delete=models.CASCADE)
+    stage = models.ForeignKey(Stage, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
-    score = models.FloatField()
+    score = models.FloatField(blank=True, null=True, default=None)
 
     class Meta:
         ordering = ["-score"]
         constraints = [
             models.UniqueConstraint(
-                fields=["ranking", "player"],
+                fields=["stage", "player"],
                 name="unique_players_in_ranking",
             ),
         ]

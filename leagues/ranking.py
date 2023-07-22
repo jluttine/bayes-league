@@ -1,3 +1,5 @@
+import functools
+
 import numpy
 from scipy.optimize import minimize
 
@@ -21,6 +23,16 @@ def team_scores(x, jss):
 
 
 def calculate_ranking(X, n_players):
+    """
+    Format of X:
+
+    [ ( [HOME_PLAYER_ID], [AWAY_PLAYER_ID], HOME_TEAM_POINTS, AWAY_TEAM_POINTS ) ]
+
+    """
+
+    # Remove matches with zero points
+    X = list(filter(lambda x: x[2] > 0 or x[3] > 0, X))
+
     # Parse points
     k_home = np.array([k for (_, _, k, _) in X])
     k_away = np.array([k for (_, _, _, k) in X])
@@ -42,6 +54,20 @@ def calculate_ranking(X, n_players):
     )
 
     # Logarithmic scale scores
-    return 10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2)
+    scores = list(10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2))
     # Linear scale scores
     #return 10 * np.exp(res.x - numpy.amin(res.x))
+
+    # If a player hasn't played at all, put score to None
+    played_ids = functools.reduce(
+        lambda acc, ids: acc.union(ids),
+        jss_home + jss_away,
+        set(),
+    )
+
+    not_played_ids = set(range(n_players)).difference(played_ids)
+
+    for i in not_played_ids:
+        scores[i] = None
+
+    return scores

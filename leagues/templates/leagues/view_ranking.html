@@ -3,7 +3,12 @@
 {% block content %}
 <h1>Ranking</h1>
 
-{% include 'leagues/table_ranking.html' %}
+{% include 'leagues/table_ranking.html' with rows=ranking %}
+
+{% for stage in league.stage_set.all %}
+<h2>Ranking of {{ stage.name }}</h2>
+{% include 'leagues/table_ranking.html' with rows=stage.rankingscore_set.all %}
+{% endfor %}
 
 <p><b>A brief explanation of the ranking scores:</b></p>
 

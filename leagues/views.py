@@ -1,8 +1,12 @@
+import functools
+from argparse import Namespace
+
 from django.shortcuts import render, get_object_or_404
 from django import http
 from django.urls import reverse
 from django.forms import inlineformset_factory
 from django.conf import settings
+from django.db.models import Q
 
 from . import models
 from . import forms
@@ -83,7 +87,15 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
-            players=league.player_set.all().order_by("-score"),
+            # FIXME: Show only matches that have results already
+            latest_matches=league.match_set.with_total_points()[:10],
+            ranking=[
+                Namespace(
+                    player=p,
+                    score=p.score,
+                )
+                for p in league.player_set.all().order_by("-score")
+            ],
         )
     )
 
@@ -180,14 +192,21 @@ def edit_player(request, league_slug, player_uuid):
     )
 
 
-def update_ranking(league):
-    ms = (
-        models.Match.objects.with_total_points()
-        .prefetch_related("home_team")
-        .prefetch_related("away_team")
-        .filter(league=league)
+def calculate_ranking(matches):
+    # FIXME: One should be able to avoid reading Player table because we only
+    # need some keys to identify the players and such keys should be in Match
+    # table already. Then, remove prefetch_related.
+    ps = list(
+        functools.reduce(
+            lambda acc, m: acc.union(
+                set(m.home_team.all())
+            ).union(
+                set(m.away_team.all())
+            ),
+            matches,
+            set(),
+        )
     )
-    ps = models.Player.objects.filter(league=league)
     p2id = {
         p.uuid: i
         for (i, p) in enumerate(ps)
@@ -198,20 +217,79 @@ def update_ranking(league):
                 # FIXME: One should be able to avoid reading Player table
                 # because we only need some keys to identify the players and
                 # such keys should be in Match table already. Then, remove
-                # prefetch_related above.
+                # prefetch_related.
                 [p2id[p.uuid] for p in m.home_team.all()],
                 [p2id[p.uuid] for p in m.away_team.all()],
                 m.total_home_points,
                 m.total_away_points,
             )
-            for m in ms
+            for m in matches
             if m.total_home_points is not None
         ],
         len(p2id),
     )
-    for (p, r) in zip(ps, rs):
-        p.score = r
-    models.Player.objects.bulk_update(ps, ["score"])
+    return (ps, rs)
+
+
+def update_league_ranking(league):
+    ms = (
+        models.Match.objects.with_total_points()
+        .prefetch_related("home_team")
+        .prefetch_related("away_team")
+        .filter(league=league)
+    )
+    (ps, rs) = calculate_ranking(ms)
+
+    # Find ranking scores for each player in the league
+    prs = {p.uuid: r for (p, r) in zip(ps, rs)}
+    players = models.Player.objects.filter(league=league)
+    for p in players:
+        # Update the score (if found) or set to null
+        p.score = prs.get(p.uuid, None)
+    # Update the database
+    models.Player.objects.bulk_update(players, ["score"])
+    return
+
+
+def update_stage_ranking(stage):
+    if stage is None:
+        return
+    # Matches contained in the stage
+    ms = (
+        models.Match.objects.with_total_points()
+        .prefetch_related("home_team")
+        .prefetch_related("away_team")
+        .filter(stage=stage)
+    )
+    (ps, rs) = calculate_ranking(ms)
+
+    # NOTE: Perhaps deletion and creation could be combined by using bulk_create
+    # with update_conflicts and update_fields. However, we would still need to
+    # delete ranking scores that shouldn't exist anymore (e.g., a player was
+    # removed from all matches of the stage).
+
+    # Delete existing ranking
+    models.RankingScore.objects.filter(stage=stage).delete()
+
+    # Create new ranking
+    models.RankingScore.objects.bulk_create(
+        [
+            models.RankingScore(
+                stage=stage,
+                player=p,
+                score=r,
+            )
+            for (p, r) in zip(ps, rs)
+        ]
+    )
+
+    return
+
+
+def update_ranking(league, *stages):
+    update_league_ranking(league)
+    for stage in stages:
+        update_stage_ranking(stage)
     return reverse(
         "view_league",
         args=[league.slug],
@@ -260,7 +338,7 @@ def create_match(request, league_slug):
         request,
         forms.MatchForm,
         template="leagues/create_match.html",
-        redirect=lambda **_: update_ranking(league),
+        redirect=lambda stage, **_: update_ranking(league, stage),
         context=dict(
             league=league,
             match=match,
@@ -278,11 +356,12 @@ def create_match(request, league_slug):
 def edit_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
+    old_stage = match.stage
     return form_view(
         request,
         forms.MatchForm,
         template="leagues/edit_match.html",
-        redirect=lambda **_: update_ranking(league),
+        redirect=lambda stage, **_: update_ranking(league, old_stage, stage),
         context=dict(
             league=league,
             match=match,
@@ -304,6 +383,12 @@ def view_ranking(request, league_slug):
         "leagues/view_ranking.html",
         dict(
             league=league,
-            players=league.player_set.all().order_by("-score"),
+            ranking=[
+                Namespace(
+                    player=p,
+                    score=p.score,
+                )
+                for p in league.player_set.all().order_by("-score")
+            ],
         )
     )

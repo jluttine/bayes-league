@@ -8,7 +8,7 @@
 
 {% include 'leagues/table_ranking.html' %}
 
-<h2>Matches</h2>
+<h2>Latest matches</h2>
 
 <p>
 <a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
@@ -18,6 +18,6 @@
 <a class="button is-primary" href="{% url 'create_match' league.slug %}">Add match</a>
 </p>
 
-{% include 'leagues/table_matches_grouped.html' %}
+{% include 'leagues/table_matches.html' with matches=latest_matches %}
 
 {% endblock %}

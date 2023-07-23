@@ -1,4 +1,4 @@
-<table>
+<table class="table is-striped">
   <thead>
     <tr>
       <th>Time</th>
@@ -10,7 +10,8 @@
     </tr>
   </thead>
   <tbody>
-    {% for match in league.match_set.with_total_points %}
+
+    {% for match in matches %}
     <tr>
       <td>{{ match.datetime|date:'Y-m-d H:i' }}</td>
       <td>

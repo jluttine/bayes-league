@@ -10,13 +10,13 @@
 
 <h2>Latest matches</h2>
 
-<p>
+<div class="block">
 <a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
-</p>
+</div>
 
-<p>
+<div class="block">
 <a class="button is-primary" href="{% url 'create_match' league.slug %}">Add match</a>
-</p>
+</div>
 
 {% include 'leagues/table_matches.html' with matches=latest_matches %}
 

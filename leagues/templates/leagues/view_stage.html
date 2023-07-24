@@ -5,8 +5,9 @@
 
 <h2>Ranking</h2>
 
+{% include 'leagues/table_ranking.html' with rows=stage.rankingscore_set.all %}
 
 <h2>Matches</h2>
 
-{% include 'leagues/table_matches_grouped.html' %}
+{% include 'leagues/table_matches.html' %}
 {% endblock %}

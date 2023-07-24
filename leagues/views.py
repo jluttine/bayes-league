@@ -87,8 +87,7 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
-            # FIXME: Show only matches that have results already
-            latest_matches=league.match_set.with_total_points()[:10],
+            matches=league.match_set.with_total_points().order_by("stage"),
             ranking=[
                 Namespace(
                     player=p,
@@ -171,6 +170,25 @@ def view_player(request, league_slug, player_uuid):
             league=player.league,
             player=player,
         )
+    )
+
+
+def create_player(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    player = models.Player(league=league)
+    return form_view(
+        request,
+        forms.PlayerForm,
+        template="leagues/create_player.html",
+        redirect=lambda **_: reverse(
+            "view_league",
+            args=[league_slug],
+        ),
+        context=dict(
+            league=player.league,
+            player=player,
+        ),
+        instance=player,
     )
 
 
@@ -327,6 +345,7 @@ def view_stage(request, league_slug, stage_slug):
         dict(
             league=stage.league,
             stage=stage,
+            matches=models.Match.objects.with_total_points().filter(stage=stage)
         )
     )
 

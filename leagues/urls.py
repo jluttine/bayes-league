@@ -25,12 +25,17 @@ urlpatterns = [
         name="view_players",
     ),
     path(
-        "league/<slug:league_slug>/players/<uuid:player_uuid>/",
+        "league/<slug:league_slug>/players/view/<uuid:player_uuid>/",
         views.view_player,
         name="view_player",
     ),
     path(
-        "league/<slug:league_slug>/players/<uuid:player_uuid>/edit/",
+        "league/<slug:league_slug>/players/add/",
+        views.create_player,
+        name="create_player",
+    ),
+    path(
+        "league/<slug:league_slug>/players/edit/<uuid:player_uuid>/",
         views.edit_player,
         name="edit_player",
     ),

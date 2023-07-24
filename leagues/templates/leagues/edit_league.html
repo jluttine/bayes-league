@@ -8,4 +8,9 @@
     {{ form }}
     <input class="button is-primary" type="submit" value="Submit">
 </form>
+
+<div class="block">
+<a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
+</div>
+
 {% endblock %}

@@ -13,7 +13,9 @@
 
     {% for match in matches %}
     <tr>
-      <td>{{ match.datetime|date:'Y-m-d H:i' }}</td>
+      <td>
+          {{ match.datetime|date:'Y-m-d H:i' }}
+      </td>
       <td>
         {% for player in match.home_team.all %}
         <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />

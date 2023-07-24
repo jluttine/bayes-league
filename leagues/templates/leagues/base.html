@@ -25,18 +25,27 @@
             <a class="navbar-item" href="{% url 'view_league' league.slug %}">
               {{ league.title }}
             </a>
-            <a class="navbar-item" href="{% url 'view_ranking' league.slug %}">
-              Ranking
-            </a>
-            <a class="navbar-item" href="{% url 'view_matches' league.slug %}">
-              Matches
-            </a>
-            <a class="navbar-item" href="{% url 'view_players' league.slug %}">
-              Players
-            </a>
+            {% for stage in league.stage_set.all %}
+            {% if forloop.first %}
+            <div class="navbar-item has-dropdown is-hoverable">
+              <div class="navbar-link">
+                Stages
+              </div>
+              <div class="navbar-dropdown">
+                {% endif %}
+                <a class="navbar-item" href={% url 'view_stage' league.slug stage.slug %}>
+                  {{ stage.name }}
+                </a>
+            {% if forloop.last %}
+              </div>
+            </div>
+            {% endif %}
+            {% endfor %}
+
             <a class="navbar-item" href="{% url 'edit_league' league.slug %}">
               Settings
             </a>
+
           </div>
 
         </div>

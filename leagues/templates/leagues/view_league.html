@@ -4,20 +4,16 @@
 
 <h1>{{ league.title }}</h1>
 
-<h2>Ranking</h2>
+<h2>Ranking
+<a class="button is-primary" href="{% url 'create_player' league.slug %}">Add player</a>
+</h2>
 
 {% include 'leagues/table_ranking.html' with rows=ranking %}
 
-<h2>Latest matches</h2>
-
-<div class="block">
-<a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
-</div>
-
-<div class="block">
+<h2>Matches
 <a class="button is-primary" href="{% url 'create_match' league.slug %}">Add match</a>
-</div>
+</h2>
 
-{% include 'leagues/table_matches.html' with matches=latest_matches %}
+{% include 'leagues/table_matches_grouped.html' %}
 
 {% endblock %}

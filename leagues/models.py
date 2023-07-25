@@ -95,11 +95,18 @@ class Player(models.Model):
 class MatchManager(models.Manager):
 
     def with_total_points(self):
+        # NOTE: Multiple annotations yield wrong results. So, we need to use a
+        # bit more complex solution with subqueries. See:
+        # https://stackoverflow.com/a/56619484
+        # https://docs.djangoproject.com/en/4.2/topics/db/aggregation/#combining-multiple-aggregations
+        period_count = self.annotate(period_count=models.Count("period")).filter(pk=models.OuterRef("pk"))
+        total_home_points = self.annotate(total_home_points=models.Sum("period__home_points")).filter(pk=models.OuterRef("pk"))
+        total_away_points = self.annotate(total_away_points=models.Sum("period__away_points")).filter(pk=models.OuterRef("pk"))
         return self.annotate(
-            period_count=models.Count("period"),
-            total_home_points=models.Sum("period__home_points"),
-            total_away_points=models.Sum("period__away_points"),
-        ).order_by("stage", "-datetime")  # Meta.ordering not obeyed, so sort explicitly
+            period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
+            total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
+            total_away_points=models.Subquery(total_away_points.values("total_away_points"), output_field=models.PositiveIntegerField()),
+        ).distinct().order_by("stage", "-datetime")  # Meta.ordering not obeyed, so sort explicitly
 
 
 class Match(models.Model):

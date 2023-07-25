@@ -1,7 +1,10 @@
 {% extends "leagues/base.html" %}
 
 {% block content %}
-<h1>{{ player.name }}</h1>
-
+<h1>{{ player.name }}
 <a class="button is-primary" href="{% url 'edit_player' player.league.slug player.uuid %}">Edit</a>
+</h1>
+
+{% include 'leagues/table_matches.html' with selected_player=player %}
+
 {% endblock %}

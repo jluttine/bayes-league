@@ -18,7 +18,13 @@
       </td>
       <td>
         {% for player in match.home_team.all %}
-        <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        <a href="{% url 'view_player' league.slug player.uuid %}">
+          {% if player == selected_player %}
+          <b>{{ player.name }}</b>
+          {% else %}
+          {{ player.name }}
+          {% endif %}
+        </a><br />
         {% endfor %}
       </td>
       <td>
@@ -26,7 +32,13 @@
       </td>
       <td>
         {% for player in match.away_team.all %}
-        <a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a><br />
+        <a href="{% url 'view_player' league.slug player.uuid %}">
+          {% if player == selected_player %}
+          <b>{{ player.name }}</b>
+          {% else %}
+          {{ player.name }}
+          {% endif %}
+        </a><br />
         {% endfor %}
       </td>
       <td>

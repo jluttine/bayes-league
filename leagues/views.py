@@ -169,6 +169,9 @@ def view_player(request, league_slug, player_uuid):
         dict(
             league=player.league,
             player=player,
+            matches=models.Match.objects.with_total_points().filter(
+                Q(home_team=player) | Q(away_team=player)
+            )
         )
     )
 

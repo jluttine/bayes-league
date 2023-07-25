@@ -1,0 +1,12 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Edit stage</h1>
+
+<form action="{% url 'edit_stage' league.slug stage.slug %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {{ formset.as_p }}
+    <input class="button is-primary" type="submit" value="Save">
+</form>
+{% endblock %}

@@ -277,10 +277,10 @@ def update_stage_ranking(stage):
         return
     # Matches contained in the stage
     ms = (
-        models.Match.objects.with_total_points()
+        stage
+        .get_matches()
         .prefetch_related("home_team")
         .prefetch_related("away_team")
-        .filter(stage=stage)
     )
     (ps, rs) = calculate_ranking(ms)
 
@@ -309,6 +309,14 @@ def update_stage_ranking(stage):
 
 def update_ranking(league, *stages):
     update_league_ranking(league)
+    stages = set(stages).union(
+        set([
+            s
+            for stage in stages
+            for s in stage.stage_set.all()
+        ])
+    )
+
     for stage in stages:
         update_stage_ranking(stage)
     return reverse(
@@ -336,6 +344,24 @@ def create_stage(request, league_slug):
     )
 
 
+def edit_stage(request, league_slug, stage_slug):
+    stage = get_object_or_404(models.Stage, league__slug=league_slug, slug=stage_slug)
+    return form_view(
+        request,
+        forms.StageForm,
+        template="leagues/edit_stage.html",
+        redirect=lambda **_: reverse(
+            "view_league",
+            args=[league_slug],
+        ),
+        context=dict(
+            league=stage.league,
+            stage=stage,
+        ),
+        instance=stage,
+    )
+
+
 def view_stage(request, league_slug, stage_slug):
     stage = get_object_or_404(
         models.Stage,
@@ -348,7 +374,7 @@ def view_stage(request, league_slug, stage_slug):
         dict(
             league=stage.league,
             stage=stage,
-            matches=models.Match.objects.with_total_points().filter(stage=stage)
+            matches=stage.get_matches(),
         )
     )
 

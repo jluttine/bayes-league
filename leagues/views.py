@@ -87,7 +87,7 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points().order_by("stage"),
+            matches=league.match_set.with_total_points().order_by("stage", "-datetime"),
             ranking=[
                 Namespace(
                     player=p,

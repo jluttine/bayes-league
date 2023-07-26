@@ -80,6 +80,19 @@ def index(request):
     )
 
 
+def info(request, league_slug):
+    # We don't actually use the league but because the league site is the whole
+    # website, each league has this same site.
+    league = get_object_or_404(models.League, slug=league_slug)
+    return render(
+        request,
+        "leagues/info.html",
+        dict(
+            league=league,
+        ),
+    )
+
+
 def view_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     return render(

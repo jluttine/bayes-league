@@ -10,6 +10,11 @@ urlpatterns = [
         name="index",
     ),
     path(
+        "league/<slug:league_slug>/info/",
+        views.info,
+        name="info",
+    ),
+    path(
         "league/<slug:league_slug>/",
         views.view_league,
         name="view_league",

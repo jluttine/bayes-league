@@ -1,0 +1,29 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Information about the ranking</h1>
+
+<p><b>A brief explanation of the ranking scores:</b></p>
+
+<p>The score of a team is calculated by taking the average of the scores of the individual players in the team.</p>
+
+<p> The scores are in logarithmic scale: A score difference of 10 means 2:1 ratio in the probabilities of winning points in a match. To give a few examples, score differences map to ratios of point winning probabilities as follows:
+  <ul>
+    <li>1 &#x21dd; 15:14</li>
+    <li>2 &#x21dd; 8:7</li>
+    <li>3 &#x21dd; 5:4</li>
+    <li>4 &#x21dd; 4:3</li>
+    <li>6 &#x21dd; 3:2</li>
+    <li>10 &#x2192; 2:1</li>
+    <li>16 &#x21dd; 3:1</li>
+    <li>20 &#x2192; 4:1</li>
+    <li>26 &#x21dd; 6:1</li>
+    <li>30 &#x2192; 8:1</li>
+    <li>x &#x2192; 2^(x/10)</li>
+  </ul>
+</p>
+
+<p>Note that this works only when the number of players in both teams are equal.</p>
+
+<p>TODO: Long explanation with binomial distributions and geometric means...</p>
+{% endblock %}

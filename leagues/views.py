@@ -146,34 +146,6 @@ def edit_league(request, league_slug):
     )
 
 
-def view_players(request, league_slug):
-    league = get_object_or_404(models.League, slug=league_slug)
-    return form_view(
-        request,
-        forms.PlayerForm,
-        template="leagues/view_players.html",
-        redirect=lambda **_: reverse(
-            "view_players",
-            args=[league_slug],
-        ),
-        context=dict(
-            league=league,
-        ),
-        instance=models.Player(league=league),
-    )
-
-
-def view_matches(request, league_slug):
-    league = get_object_or_404(models.League, slug=league_slug)
-    return render(
-        request,
-        "leagues/view_matches.html",
-        dict(
-            league=league,
-        ),
-    )
-
-
 def view_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
     return render(
@@ -435,22 +407,4 @@ def edit_match(request, league_slug, match_uuid):
             fields=["home_points", "away_points"],
             extra=3,
         ),
-    )
-
-
-def view_ranking(request, league_slug):
-    league = get_object_or_404(models.League, slug=league_slug)
-    return render(
-        request,
-        "leagues/view_ranking.html",
-        dict(
-            league=league,
-            ranking=[
-                Namespace(
-                    player=p,
-                    score=p.score,
-                )
-                for p in league.player_set.all().order_by("-score")
-            ],
-        )
     )

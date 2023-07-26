@@ -25,11 +25,6 @@ urlpatterns = [
         name="edit_league",
     ),
     path(
-        "league/<slug:league_slug>/players/",
-        views.view_players,
-        name="view_players",
-    ),
-    path(
         "league/<slug:league_slug>/players/view/<uuid:player_uuid>/",
         views.view_player,
         name="view_player",
@@ -60,11 +55,6 @@ urlpatterns = [
         name="view_stage",
     ),
     path(
-        "league/<slug:league_slug>/matches/",
-        views.view_matches,
-        name="view_matches",
-    ),
-    path(
         "league/<slug:league_slug>/matches/add/",
         views.create_match,
         name="create_match",
@@ -75,13 +65,8 @@ urlpatterns = [
     #     name="view_match",
     # ),
     path(
-        "league/<slug:league_slug>/matches/<uuid:match_uuid>/edit/",
+        "league/<slug:league_slug>/matches/edit/<uuid:match_uuid>/",
         views.edit_match,
         name="edit_match",
-    ),
-    path(
-        "league/<slug:league_slug>/ranking/",
-        views.view_ranking,
-        name="view_ranking",
     ),
 ]

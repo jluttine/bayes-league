@@ -39,9 +39,7 @@ class StageForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         league = self.instance.league
-        self.fields["previous"] = ModelMultipleChoiceField(
-            queryset = models.Stage.objects.exclude(pk=self.instance.pk)
-        )
+        self.fields["previous"].queryset = models.Stage.objects.exclude(pk=self.instance.pk)
 
 
 class MatchForm(ModelForm):

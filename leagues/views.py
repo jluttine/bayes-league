@@ -313,6 +313,7 @@ def update_ranking(league, *stages):
         set([
             s
             for stage in stages
+            if stage is not None
             for s in stage.stage_set.all()
         ])
     )

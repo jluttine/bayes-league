@@ -8,7 +8,6 @@ from ordered_model.models import OrderedModel
 class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
     title = models.CharField(max_length=100)
-    bonus = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     # TODO:
     # - password
@@ -38,11 +37,6 @@ class Stage(OrderedModel):
         "self",
         symmetrical=False,
         blank=True,
-    )
-    bonus = models.PositiveIntegerField(
-        blank=True,
-        null=True,
-        default=None,
     )
 
     order_with_respect_to = "league"
@@ -118,51 +112,13 @@ class MatchManager(models.Manager):
         # bit more complex solution with subqueries. See:
         # https://stackoverflow.com/a/56619484
         # https://docs.djangoproject.com/en/4.2/topics/db/aggregation/#combining-multiple-aggregations
-        period_count = self.annotate(
-            period_count=models.Count("period", distinct=True),
-        ).filter(pk=models.OuterRef("pk"))
-        total_home_points = self.annotate(
-            total_home_points=models.Sum("period__home_points")
-        ).filter(pk=models.OuterRef("pk"))
-        total_away_points = self.annotate(
-            total_away_points=models.Sum("period__away_points")
-        ).filter(pk=models.OuterRef("pk"))
-        home_periods = self.filter(
-            pk=models.OuterRef("pk"),
-            period__home_points__gt=models.F("period__away_points"),
-        ).annotate(
-            home_periods=models.Count("period", distinct=True),
-        )
-        away_periods = self.filter(
-            pk=models.OuterRef("pk"),
-            period__away_points__gt=models.F("period__home_points"),
-        ).annotate(
-            away_periods=models.Count("period", distinct=True),
-        )
+        period_count = self.annotate(period_count=models.Count("period")).filter(pk=models.OuterRef("pk"))
+        total_home_points = self.annotate(total_home_points=models.Sum("period__home_points")).filter(pk=models.OuterRef("pk"))
+        total_away_points = self.annotate(total_away_points=models.Sum("period__away_points")).filter(pk=models.OuterRef("pk"))
         return self.annotate(
             period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
             total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
             total_away_points=models.Subquery(total_away_points.values("total_away_points"), output_field=models.PositiveIntegerField()),
-            bonus=models.Case(
-                models.When(stage__bonus=None, then=models.F("league__bonus")),
-                default=models.F("stage__bonus")
-            ),
-            home_periods=models.functions.Coalesce(
-                models.Subquery(
-                    home_periods.values("home_periods"),
-                    output_field=models.PositiveIntegerField(),
-                ),
-                0,
-            ),
-            away_periods=models.functions.Coalesce(
-                models.Subquery(
-                    away_periods.values("away_periods"),
-                    output_field=models.PositiveIntegerField(),
-                ),
-                0,
-            ),
-            home_bonus=models.F("bonus") * models.F("home_periods"),
-            away_bonus=models.F("bonus") * models.F("away_periods"),
         ).distinct().order_by("stage", "-datetime")  # Meta.ordering not obeyed, so sort explicitly
 
 

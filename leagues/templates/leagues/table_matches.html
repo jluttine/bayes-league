@@ -6,8 +6,7 @@
         <th>Home team</th>
         <th></th>
         <th>Away team</th>
-        <th>Result</th>
-        <th>Bonus</th>
+        <th></th>
         <th></th>
       </tr>
     </thead>
@@ -52,18 +51,7 @@
           {% endif %}
 
         </td>
-        <td>
-          {% if match.period_count > 0 %}
-          {% if match.bonus != 0 %}
-          {{ match.home_bonus }} - {{ match.away_bonus }}
-          {% else %}
-          -
-          {% endif %}
-          {% endif %}
-        </td>
-        <td>
-          <a href="{% url 'edit_match' league.slug match.uuid %}">Edit</a>
-        </td>
+        <td><a href="{% url 'edit_match' league.slug match.uuid %}">Edit</a></td>
       </tr>
       {% endfor %}
     </tbody>

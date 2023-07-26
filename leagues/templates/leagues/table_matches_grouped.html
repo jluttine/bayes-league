@@ -3,18 +3,5 @@
 {% if stage.grouper.name != None %}
 <h3><a href="{% url 'view_stage' stage.grouper.league.slug stage.grouper.slug %}">{{ stage.grouper }}</a></h3>
 {% endif %}
-{% if stage.grouper.bonus != None %}
-{% if stage.grouper.bonus != 0 %}
-Bonus points: {{ stage.grouper.bonus }}
-{% else %}
-No bonus points
-{% endif %}
-{% else %}
-{% if league.bonus != 0 %}
-Bonus points: {{ league.bonus }} (league default)
-{% else %}
-No bonus points (league default)
-{% endif %}
-{% endif %}
 {% include 'leagues/table_matches.html' with matches=stage.list %}
 {% endfor %}

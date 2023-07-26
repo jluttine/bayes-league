@@ -126,9 +126,13 @@ def edit_league(request, league_slug):
             league=league,
         ),
         instance=league,
-        redirect=lambda **_: reverse(
-            "view_league",
-            args=[league_slug],
+        redirect=lambda **_: update_ranking(
+            league,
+            *league.stage_set.all(),
+            redirect=reverse(
+                "view_league",
+                args=[league_slug],
+            ),
         ),
     )
 
@@ -241,8 +245,8 @@ def calculate_ranking(matches):
                 # prefetch_related.
                 [p2id[p.uuid] for p in m.home_team.all()],
                 [p2id[p.uuid] for p in m.away_team.all()],
-                m.total_home_points,
-                m.total_away_points,
+                m.total_home_points + m.home_bonus,
+                m.total_away_points + m.away_bonus,
             )
             for m in matches
             if m.total_home_points is not None
@@ -307,7 +311,7 @@ def update_stage_ranking(stage):
     return
 
 
-def update_ranking(league, *stages):
+def update_ranking(league, *stages, redirect=None):
     update_league_ranking(league)
     stages = set(stages).union(
         set([
@@ -320,7 +324,7 @@ def update_ranking(league, *stages):
 
     for stage in stages:
         update_stage_ranking(stage)
-    return reverse(
+    return redirect if redirect is not None else reverse(
         "view_league",
         args=[league.slug],
     )
@@ -351,9 +355,13 @@ def edit_stage(request, league_slug, stage_slug):
         request,
         forms.StageForm,
         template="leagues/edit_stage.html",
-        redirect=lambda **_: reverse(
-            "view_league",
-            args=[league_slug],
+        redirect=lambda **_: update_ranking(
+            stage.league,
+            stage,
+            redirect=reverse(
+                "view_stage",
+                args=[league_slug, stage_slug],
+            ),
         ),
         context=dict(
             league=stage.league,

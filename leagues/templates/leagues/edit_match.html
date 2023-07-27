@@ -7,6 +7,12 @@
     {% csrf_token %}
     {{ form.as_p }}
     {{ formset.as_p }}
+    <a class="button is-danger" href="{% url 'delete_match' match.league.slug match.uuid %}">
+        Delete
+    </a>
+    <a class="button is-primary is-light" href="{% url 'view_league' match.league.slug %}">
+        Cancel
+    </a>
     <input class="button is-primary" type="submit" value="Save">
 </form>
 {% endblock %}

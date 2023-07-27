@@ -416,3 +416,25 @@ def edit_match(request, league_slug, match_uuid):
             extra=3,
         ),
     )
+
+
+def delete_match(request, league_slug, match_uuid):
+    league = get_object_or_404(models.League, slug=league_slug)
+    match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
+
+    if request.method == "POST":
+        stage = match.stage
+        match.delete()
+        update_ranking(league, stage)
+        return http.HttpResponseRedirect(
+            reverse("view_league", args=[league.slug])
+        )
+    else:
+        return render(
+            request,
+            "leagues/delete_match.html",
+            dict(
+                match=match,
+                league=league,
+            ),
+        )

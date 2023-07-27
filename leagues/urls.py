@@ -69,4 +69,9 @@ urlpatterns = [
         views.edit_match,
         name="edit_match",
     ),
+    path(
+        "league/<slug:league_slug>/matches/delete/<uuid:match_uuid>/",
+        views.delete_match,
+        name="delete_match",
+    ),
 ]

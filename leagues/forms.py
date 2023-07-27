@@ -15,7 +15,7 @@ class LeagueForm(ModelForm):
 
     class Meta:
         model = models.League
-        fields = ["title"]
+        fields = ["title", "bonus"]
 
 
 class PlayerForm(ModelForm):
@@ -34,7 +34,7 @@ class StageForm(ModelForm):
 
     class Meta:
         model = models.Stage
-        fields = ["name", "previous"]
+        fields = ["name", "bonus", "previous"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

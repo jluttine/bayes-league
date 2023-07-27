@@ -39,7 +39,11 @@ class StageForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         league = self.instance.league
-        self.fields["previous"].queryset = models.Stage.objects.exclude(pk=self.instance.pk)
+        self.fields["previous"].queryset = models.Stage.objects.exclude(
+            pk=self.instance.pk
+        ).filter(
+            league=self.instance.league
+        )
 
 
 class MatchForm(ModelForm):
@@ -56,6 +60,9 @@ class MatchForm(ModelForm):
         )
         self.fields["away_team"] = PlayerMultipleChoiceField(
             queryset = models.Player.objects.filter(league=league)
+        )
+        self.fields["stage"].queryset = self.fields["stage"].queryset.filter(
+            league=league
         )
         return
 

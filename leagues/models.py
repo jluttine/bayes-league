@@ -3,7 +3,9 @@ import uuid
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
+from django.core.exceptions import ValidationError
 from ordered_model.models import OrderedModel
+
 
 class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
@@ -158,6 +160,12 @@ class Match(models.Model):
 
     class Meta:
         ordering = ["-datetime"]
+
+    def clean(self):
+        if self.stage is not None and self.stage.league != self.league:
+            raise ValidationError(
+                "Match league and stage league must be the same"
+            )
 
     def __str__(self):
         return f"{self.uuid}"

@@ -4,14 +4,24 @@ with pkgs;
 
 mkShell {
   buildInputs = [
-    (python3.withPackages (ps: with ps; [
-      build
-      django
-      numpy
-      scipy
-      autograd
-      ipython
-      django-ordered-model
-    ]))
+    (
+      (
+        python3.override {
+          packageOverrides = self: super: {
+            django = super.django_4;
+          };
+        }
+      ).withPackages (
+        ps: with ps; [
+          build
+          numpy
+          scipy
+          autograd
+          ipython
+          django
+          django-ordered-model
+        ]
+      )
+    )
   ];
 }

@@ -141,6 +141,11 @@ class MatchManager(models.Manager):
         ).annotate(
             away_periods=models.Count("period", distinct=True),
         )
+        # datetime_finished = self.filter(
+        #     pk=models.OuterRef("pk"),
+        # ).annotate(
+        #     datetime_finished=models.Max("period__datetime"),
+        # )
         return self.annotate(
             period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
             total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
@@ -165,7 +170,15 @@ class MatchManager(models.Manager):
             ),
             home_bonus=models.F("bonus") * models.F("home_periods"),
             away_bonus=models.F("bonus") * models.F("away_periods"),
-        ).distinct().order_by("stage", "-datetime")  # Meta.ordering not obeyed, so sort explicitly
+            # datetime_finished=models.Subquery(
+            #     datetime_finished.values("datetime_finished"),
+            #     output_field=models.DateTimeField(null=True),
+            # ),
+            datetime_finished=models.Max("period__datetime"),
+        ).distinct().order_by(
+            "stage",
+            models.F("datetime_finished").desc(nulls_first=True),
+        )  # Meta.ordering not obeyed, so sort explicitly
 
 
 class Match(models.Model):

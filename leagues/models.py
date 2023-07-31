@@ -47,11 +47,9 @@ class Stage(OrderedModel):
         default=None,
     )
 
-    order_with_respect_to = "league"
-
     class Meta:
         # The ordering is defined in OrderedModel base class
-        ordering = ('order',)
+        ordering = ["order"]
         constraints = [
             models.UniqueConstraint(
                 fields=["league", "slug"],

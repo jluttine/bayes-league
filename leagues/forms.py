@@ -1,5 +1,12 @@
-from django.forms import ModelForm, ModelMultipleChoiceField
+from django.forms import (
+    Form,
+    ModelForm,
+    ModelMultipleChoiceField,
+    ModelChoiceField,
+    DateTimeField,
+)
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 from . import models
 
@@ -83,4 +90,47 @@ class MatchForm(ModelForm):
         awayset = set(p.uuid for p in away)
         if not homeset.isdisjoint(awayset):
             raise ValidationError("Players are allowed to play only in one of the teams, not both")
+        return
+
+
+class ChooseStageForm(ModelForm):
+
+    class Meta:
+        model = models.Match
+        fields = ["stage"]
+
+    def __init__(self, league, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.instance.league = league
+        self.fields["stage"].queryset = self.fields["stage"].queryset.filter(
+            league=league
+        )
+        return
+
+
+class DummyMatchForm(ModelForm):
+    """A simple read-only inline form for a single match used in bulk match creation"""
+
+    class Meta:
+        model = models.Match
+        fields = ["home_team", "away_team"]
+
+    clean = MatchForm.clean
+
+
+class BulkMatchForm(Form):
+    players = ModelMultipleChoiceField(models.Player.objects.all())
+    # datetime = DateTimeField(
+    #     initial=lambda: (
+    #         timezone.now()
+    #         .astimezone(timezone.get_default_timezone())
+    #         .strftime("%Y-%m-%d %H:%M")
+    #     ),
+    #     input_formats=["%Y-%m-%d %H:%M"],
+    # )
+
+    def __init__(self, league, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["players"].queryset = models.Player.objects.filter(league=league)
+        #self.fields["datetime"].initial = timezone.now()
         return

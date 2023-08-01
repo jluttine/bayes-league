@@ -4,7 +4,7 @@ from argparse import Namespace
 from django.shortcuts import render, get_object_or_404
 from django import http
 from django.urls import reverse
-from django.forms import inlineformset_factory
+from django.forms import inlineformset_factory, formset_factory
 from django.conf import settings
 from django.db.models import Q
 
@@ -25,7 +25,7 @@ class DummyInlineFormSet():
         return
 
 
-def form_view(request, Form, template, redirect, context={}, save=True,
+def model_form_view(request, Form, template, redirect, context={}, save=True,
               InlineFormSet=DummyInlineFormSet, instance=None):
 
     if instance is None:
@@ -100,7 +100,7 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points().order_by("stage", "-datetime"),
+            matches=league.match_set.with_total_points(),
             ranking=[
                 Namespace(
                     player=p,
@@ -114,7 +114,7 @@ def view_league(request, league_slug):
 
 def create_league(request, league_slug):
     raise NotImplementedError()
-    return form_view(
+    return model_form_view(
         request,
         forms.LeagueForm,
         template="leagues/create_league.html",
@@ -131,7 +131,7 @@ def create_league(request, league_slug):
 
 def edit_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
-    return form_view(
+    return model_form_view(
         request,
         forms.LeagueForm,
         template="leagues/edit_league.html",
@@ -168,7 +168,7 @@ def view_player(request, league_slug, player_uuid):
 def create_player(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     player = models.Player(league=league)
-    return form_view(
+    return model_form_view(
         request,
         forms.PlayerForm,
         template="leagues/create_player.html",
@@ -186,7 +186,7 @@ def create_player(request, league_slug):
 
 def edit_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
-    return form_view(
+    return model_form_view(
         request,
         forms.PlayerForm,
         template="leagues/edit_player.html",
@@ -318,7 +318,7 @@ def update_ranking(league, *stages, redirect=None):
 def create_stage(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     stage = models.Stage(league=league)
-    return form_view(
+    return model_form_view(
         request,
         forms.StageForm,
         template="leagues/create_stage.html",
@@ -336,7 +336,7 @@ def create_stage(request, league_slug):
 
 def edit_stage(request, league_slug, stage_slug):
     stage = get_object_or_404(models.Stage, league__slug=league_slug, slug=stage_slug)
-    return form_view(
+    return model_form_view(
         request,
         forms.StageForm,
         template="leagues/edit_stage.html",
@@ -376,7 +376,7 @@ def view_stage(request, league_slug, stage_slug):
 def create_match(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     match = models.Match(league=league)
-    return form_view(
+    return model_form_view(
         request,
         forms.MatchForm,
         template="leagues/create_match.html",
@@ -395,11 +395,89 @@ def create_match(request, league_slug):
     )
 
 
+def create_multiple_matches(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+
+    if request.method == "POST":
+
+        if "generate" in request.POST:
+
+            form = forms.BulkMatchForm(league, request.POST)
+
+            if form.is_valid():
+                players = form.cleaned_data["players"]
+                DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
+                formset = DummyMatchFormset(
+                    initial=[
+                        dict(
+                            home_team=[p1],
+                            away_team=[p2],
+                        )
+                        for (p1, p2) in zip(players[0::2], players[1::2])
+                    ],
+                )
+                # Use the algorithm to create matches
+                #
+                # Show a page that lists the games and asks for confirmation
+                # matches = [
+                #     (p1, p2)
+                #     for (p1, p2) in zip(players[0::2], players[1::2])
+                # ]
+                return render(
+                    request,
+                    "leagues/create_multiple_matches.html",
+                    dict(
+                        form=form,
+                        stage_form=forms.ChooseStageForm(league),
+                        league=league,
+                        formset=formset,
+                    )
+                )
+            return render(
+                request,
+                "leagues/create_multiple_matches.html",
+                dict(
+                    form=form,
+                    league=league,
+                )
+            )
+
+        elif "confirm" in request.POST:
+            DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
+            stage_form = forms.ChooseStageForm(league, request.POST)
+            formset = DummyMatchFormset(request.POST, initial=[])
+            if stage_form.is_valid():
+                stage = stage_form.cleaned_data["stage"]
+                for f in formset:
+                    f.instance.league = league
+                    f.instance.stage = stage
+                    if f.is_valid():
+                        instance = f.save()
+                        print(instance)
+            # Redirect to the stage page
+            return http.HttpResponseRedirect(
+                reverse("view_league", args=[league.slug])
+            )
+        else:
+            raise RuntimeError("Unknown form")
+
+    else:
+        form = forms.BulkMatchForm(league)
+        return render(
+            request,
+            "leagues/create_multiple_matches.html",
+            dict(
+                form=form,
+                league=league,
+            ),
+        )
+
+
 def edit_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
     old_stage = match.stage
-    return form_view(
+    return model_form_view(
         request,
         forms.MatchForm,
         template="leagues/edit_match.html",

@@ -12,6 +12,7 @@
 
 <h2>Matches
 <a class="button is-primary" href="{% url 'create_match' league.slug %}">Add match</a>
+<a class="button is-primary is-light" href="{% url 'create_multiple_matches' league.slug %}">Bulk create matches</a>
 </h2>
 
 {% include 'leagues/table_matches_grouped.html' %}

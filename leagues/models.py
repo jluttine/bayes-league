@@ -176,6 +176,7 @@ class MatchManager(models.Manager):
         ).distinct().order_by(
             "stage",
             models.F("datetime_finished").desc(nulls_first=True),
+            "-pk",
         )  # Meta.ordering not obeyed, so sort explicitly
 
 

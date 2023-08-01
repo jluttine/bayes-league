@@ -59,6 +59,11 @@ urlpatterns = [
         views.create_match,
         name="create_match",
     ),
+    path(
+        "league/<slug:league_slug>/matches/bulk/",
+        views.create_multiple_matches,
+        name="create_multiple_matches",
+    ),
     # path(
     #     "league/<slug:league_slug>/matches/<uuid:match_uuid>/",
     #     views.view_match,

@@ -1,5 +1,6 @@
 import functools
 from argparse import Namespace
+import numpy as np
 
 from django.shortcuts import render, get_object_or_404
 from django import http
@@ -395,6 +396,135 @@ def create_match(request, league_slug):
     )
 
 
+def create_even_matches(players):
+    # Sort players based on ranking
+    players = sorted(
+        players,
+        key=lambda p: -np.inf if p.score is None else p.score,
+        reverse=True
+    )
+
+    # Get matches in which the given players have played against each other
+    matches = models.Match.objects.with_players(players)
+
+    # Create a mapping from the ID to a list index
+    ijs = {p.id: i for (i, p) in enumerate(players)}
+
+    # Construct a matrix which tells how many times home player i has played
+    # against away player j
+    N = len(players)
+    C = np.zeros((N, N))
+    for m in matches:
+        for hp in m.home_players:
+            i = ijs[hp.id]
+            for ap in m.away_players:
+                j = ijs[ap.id]
+                C[i,j] += 1
+
+    # We don't care about home vs away, so make the matrix symmetric
+    C = C + C.T
+
+    # Ranking difference cost as a matrix
+    rankings = np.array([
+        np.nan if p.score is None else p.score
+        for p in players
+    ])
+    R2 = np.nan_to_num(
+        (rankings[:, None] - rankings[None, :]) ** 2,
+        nan=0,
+    )
+
+    # The beef: find match pairings
+
+    # If there is an odd number of players, first add one match where the
+    # left-out player plays against the player it prefers the most.
+    if N % 2 == 0:
+        odd_matches = []
+        remaining_players = np.arange(N)
+    else:
+        opponent = np.lexsort(
+            (
+                R2[-1,:-1], # secondary key: ranking difference
+                C[-1,:-1], # primary key: match counts
+            )
+        )[0]
+        odd_matches = [(opponent, N-1)]
+        remaining_players = np.delete(np.arange(N), opponent)
+
+    # Find the optimal by traversing all possible solutions recursively.
+    # Criteria:
+    #
+    # 1. Play against teams you've played least against with:
+    #
+    #    - Minimize the sum of number of matches the teams have already played
+    #      against each other.
+    #
+    # 2. Play against teams with similar ranking:
+    #
+    #    - Minimize the square sum of ranking score differences between the
+    #      teams in each pair.
+    #
+    # The first criterion is primary, so the second criterion is relevant only
+    # when there are multiple possibilities with the same minimum for criterion
+    # one.
+
+    def find_optimal_pairings(ps, best_cost, current_cost):
+
+        # Can't pair one or less teams, so stop here
+        if len(ps) < 2:
+            return ([], current_cost)
+
+        # If we can't find better solutions, we'll just return Nones. No need to
+        # bother finding locally best solution from this branch if we won't be
+        # globally best anyway.
+        retval = (None, None)
+
+        p0 = ps[0]
+        for j in range(1, len(ps)):
+            p1 = ps[j]
+            # Current cost at this depth
+            current_cost_new = (
+                current_cost[0] + C[p0, p1],
+                current_cost[1] + R2[p0, p1],
+            )
+            if current_cost_new >= best_cost:
+                # No need to examine this branch deeper if this branch is
+                # already worse than the currently best solution
+                continue
+
+            # Go deeper!
+            (proposal_matches, proposal_cost) = find_optimal_pairings(
+                np.delete(ps, [0, j]),
+                best_cost,
+                current_cost_new,
+            )
+            if proposal_matches is None:
+                # This branch had no better solutions
+                continue
+            elif proposal_cost < best_cost:
+                # Yey! We found a solution that is currently the best one found!
+                print(proposal_cost)
+                best_cost = proposal_cost
+                retval = (
+                    [(p0, p1)] + proposal_matches,
+                    proposal_cost,
+                )
+
+        return retval
+
+    (matches, _) = find_optimal_pairings(
+        remaining_players,
+        (np.inf, np.inf),
+        (0, 0),
+    )
+
+    # Convert the list indices to player objects
+    return [
+        (players[m[0]], players[m[1]])
+        for m in odd_matches + matches
+    ]
+
+
 def create_multiple_matches(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
 
@@ -406,6 +536,9 @@ def create_multiple_matches(request, league_slug):
 
             if form.is_valid():
                 players = form.cleaned_data["players"]
+
+                matches = create_even_matches(players)
+
                 DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
                 formset = DummyMatchFormset(
                     initial=[
@@ -413,7 +546,7 @@ def create_multiple_matches(request, league_slug):
                             home_team=[p1],
                             away_team=[p2],
                         )
-                        for (p1, p2) in zip(players[0::2], players[1::2])
+                        for (p1, p2) in matches
                     ],
                 )
                 # Use the algorithm to create matches
@@ -453,7 +586,6 @@ def create_multiple_matches(request, league_slug):
                     f.instance.stage = stage
                     if f.is_valid():
                         instance = f.save()
-                        print(instance)
             # Redirect to the stage page
             return http.HttpResponseRedirect(
                 reverse("view_league", args=[league.slug])

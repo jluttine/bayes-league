@@ -113,6 +113,26 @@ class Player(models.Model):
 
 class MatchManager(models.Manager):
 
+    def with_players(self, players):
+        player_qs = Player.objects.filter(
+            id__in=[p.id for p in players]
+        )
+        return self.prefetch_related(
+            models.Prefetch(
+                "home_team",
+                queryset=player_qs,
+                to_attr="home_players",
+            )
+        ).prefetch_related(
+            models.Prefetch(
+                "away_team",
+                queryset=player_qs,
+                to_attr="away_players",
+            )
+        ).filter(
+            models.Q(home_team__in=players) & models.Q(away_team__in=players)
+        ).distinct()
+
     def with_total_points(self):
         # NOTE: Multiple annotations yield wrong results. So, we need to use a
         # bit more complex solution with subqueries. See:

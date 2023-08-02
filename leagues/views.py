@@ -1,5 +1,6 @@
 import functools
 from argparse import Namespace
+import re
 import numpy as np
 
 from django.shortcuts import render, get_object_or_404
@@ -27,35 +28,38 @@ class DummyInlineFormSet():
 
 
 def model_form_view(request, Form, template, redirect, context={}, save=True,
-              InlineFormSet=DummyInlineFormSet, instance=None):
+                    InlineFormSet=DummyInlineFormSet, instance=None,
+                    conditional=lambda post, process: process()):
 
     if instance is None:
         instance = Form.Meta.model()
 
     if request.method == "POST":
 
-        form = Form(
-            request.POST,
-            instance=instance,
-        )
-
-        formset = InlineFormSet(request.POST, request.FILES, instance=form.instance)
-        if form.is_valid():
-            if formset.is_valid():
-                if save:
-                    form.save()
-                    formset.save()
-                return http.HttpResponseRedirect(redirect(**form.cleaned_data))
-
-        return render(
-            request,
-            template,
-            dict(
-                form=form,
-                formset=formset,
-                **context,
+        def process():
+            form = Form(
+                request.POST,
+                instance=instance,
             )
-        )
+
+            formset = InlineFormSet(request.POST, request.FILES, instance=form.instance)
+            if form.is_valid():
+                if formset.is_valid():
+                    if save:
+                        form.save()
+                        formset.save()
+                    return http.HttpResponseRedirect(redirect(**form.cleaned_data))
+
+            return render(
+                request,
+                template,
+                dict(
+                    form=form,
+                    formset=formset,
+                    **context,
+                )
+            )
+        return conditional(request.POST, process)
 
     else:
         return render(
@@ -132,12 +136,53 @@ def create_league(request, league_slug):
 
 def edit_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+
+    def move_stage(post):
+        for key in post:
+            m = re.fullmatch(
+                r"^move (?P<slug>.*) (?P<action>(top|above|below|bottom)) ?(?P<arg>.+)?$",
+                key,
+            )
+            if m is None:
+                continue
+            d = m.groupdict()
+            action = d["action"]
+            stage = get_object_or_404(
+                models.Stage,
+                league=league,
+                slug=d["slug"]
+            )
+            arg = d.get("arg")
+            other = (
+                None if arg is None else
+                get_object_or_404(
+                    models.Stage,
+                    league=league,
+                    slug=arg,
+                )
+            )
+            if action == "top":
+                stage.bottom()
+            elif action == "bottom":
+                stage.top()
+            elif action == "above" and other is not None:
+                stage.below(other)
+            elif action == "below" and other is not None:
+                stage.above(other)
+        return http.HttpResponseRedirect(
+            reverse("edit_league", args=[league.slug])
+        )
+
+    stages = [None] + list(league.stage_set.all()) + [None]
+    stages_triple = list(zip(stages[:-2], stages[1:-1], stages[2:]))
+
     return model_form_view(
         request,
         forms.LeagueForm,
         template="leagues/edit_league.html",
         context=dict(
             league=league,
+            stages_triple=stages_triple,
         ),
         instance=league,
         redirect=lambda **_: update_ranking(
@@ -148,6 +193,10 @@ def edit_league(request, league_slug):
                 args=[league_slug],
             ),
         ),
+        conditional=lambda post, process: (
+            process() if "title" in post else
+            move_stage(post)
+        )
     )
 
 
@@ -503,7 +552,6 @@ def create_even_matches(players):
                 continue
             elif proposal_cost < best_cost:
                 # Yey! We found a solution that is currently the best one found!
-                print(proposal_cost)
                 best_cost = proposal_cost
                 retval = (
                     [(p0, p1)] + proposal_matches,

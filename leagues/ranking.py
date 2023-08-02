@@ -30,6 +30,12 @@ def calculate_ranking(X, n_players):
 
     """
 
+    if n_players == 0:
+        return []
+
+    if len(X) == 0:
+        return [None] * n_players
+
     # Remove matches with zero points
     X = list(filter(lambda x: x[2] > 0 or x[3] > 0, X))
 

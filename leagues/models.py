@@ -49,7 +49,7 @@ class Stage(OrderedModel):
 
     class Meta:
         # The ordering is defined in OrderedModel base class
-        ordering = ["order"]
+        ordering = [models.F("order").desc(nulls_first=True)]
         constraints = [
             models.UniqueConstraint(
                 fields=["league", "slug"],

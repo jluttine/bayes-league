@@ -41,12 +41,12 @@ class StageForm(ModelForm):
 
     class Meta:
         model = models.Stage
-        fields = ["name", "bonus", "previous"]
+        fields = ["name", "bonus", "included"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         league = self.instance.league
-        self.fields["previous"].queryset = models.Stage.objects.exclude(
+        self.fields["included"].queryset = models.Stage.objects.exclude(
             pk=self.instance.pk
         ).filter(
             league=self.instance.league

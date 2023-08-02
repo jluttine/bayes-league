@@ -36,7 +36,7 @@ class Stage(OrderedModel):
         "Player",
         through="RankingScore",
     )
-    previous = models.ManyToManyField(
+    included = models.ManyToManyField(
         "self",
         symmetrical=False,
         blank=True,
@@ -64,7 +64,7 @@ class Stage(OrderedModel):
     def get_matches(self):
         return Match.objects.with_total_points().filter(
             models.Q(stage=self) |
-            models.Q(stage__in=self.previous.all())
+            models.Q(stage__in=self.included.all())
         )
 
     def __str__(self):

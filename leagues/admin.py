@@ -1,4 +1,5 @@
 from django.contrib import admin
+from ordered_model.admin import OrderedModelAdmin
 
 from .models import League, Player, Match, Stage, Period
 
@@ -13,7 +14,11 @@ class MatchAdmin(admin.ModelAdmin):
     ]
 
 
+class StageAdmin(OrderedModelAdmin):
+    list_display = ('name', 'move_up_down_links')
+
+
 admin.site.register(League)
-admin.site.register(Stage)
+admin.site.register(Stage, StageAdmin)
 admin.site.register(Player)
 admin.site.register(Match, MatchAdmin)

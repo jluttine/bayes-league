@@ -1,4 +1,5 @@
 import uuid
+import secrets
 
 from django.db import models
 from django.utils import timezone
@@ -7,14 +8,41 @@ from django.core.exceptions import ValidationError
 from ordered_model.models import OrderedModel
 
 
+def create_key():
+    return secrets.token_urlsafe(30)
+
+
 class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
     title = models.CharField(max_length=100)
     bonus = models.PositiveIntegerField(default=0)
+    write_protected = models.BooleanField(default=False)
+    write_key = models.CharField(
+        null=True,
+        default=None,
+        max_length=50,
+        unique=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
     # TODO:
     # - password
     # - public / unlisted / private
+
+    def clean(self):
+        # Create a key when write-protection is enabled
+        if self.write_key is None and self.write_protected:
+            self.write_key = create_key()
+
+        # NOTE: COMMENT OUT THE CODE BELOW. Let's not change the key every time
+        # write-protection is re-enabled because we currently don't have any
+        # means to log out all the other user sessions, so they'd stay logged in
+        # although they logged in with an old key. We should revoke/expire those
+        # sessions too.
+        #
+        # # Remove the key when write-protection is disabled
+        # if not self.write_protected:
+        #     self.write_key = None
+        return
 
     def __str__(self):
         return f"{self.slug} - {self.title}"

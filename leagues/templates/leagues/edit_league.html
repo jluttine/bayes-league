@@ -9,6 +9,17 @@
   <input class="button is-primary" type="submit" value="Save">
 </form>
 
+{% if league.write_protected %}
+<div class="block">
+  Link for sharing read-only access: <a href="{{ home_url }}">{{ home_url }}</a>
+</div>
+<div class="block">
+  Link for sharing write access: <a href="{{ login_url }}">{{ login_url }}</a>
+</div>
+{% else %}
+  Link for sharing: <a href="{{ home_url }}">{{ home_url }}</a>
+{% endif %}
+
 <h2>Stages
   <a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
 </h2>

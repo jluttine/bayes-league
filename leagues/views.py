@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.forms import inlineformset_factory, formset_factory
 from django.conf import settings
 from django.db.models import Q
+from django.core.exceptions import PermissionDenied
 
 from . import models
 from . import forms
@@ -135,7 +136,11 @@ def create_league(request, league_slug):
 
 
 def edit_league(request, league_slug):
+
     league = get_object_or_404(models.League, slug=league_slug)
+
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
 
     def move_stage(post):
         for key in post:
@@ -183,14 +188,28 @@ def edit_league(request, league_slug):
         context=dict(
             league=league,
             stages_triple=stages_triple,
+            login_url=request.build_absolute_uri(
+                reverse("login", args=[league.slug, league.write_key])
+            ),
+            home_url=request.build_absolute_uri(
+                reverse("view_league", args=[league.slug])
+            ),
         ),
         instance=league,
-        redirect=lambda **_: update_ranking(
+        redirect=lambda write_protected, **_: update_ranking(
             league,
             *league.stage_set.all(),
-            redirect=reverse(
-                "view_league",
-                args=[league_slug],
+            # Log in just to make sure we won't be locked out if we enabled
+            # write protection.
+            redirect=(
+                reverse(
+                    "login",
+                    args=[league.slug, league.write_key],
+                ) if write_protected else
+                reverse(
+                    "view_league",
+                    args=[league.slug],
+                )
             ),
         ),
         conditional=lambda post, process: (
@@ -235,7 +254,12 @@ def create_player(request, league_slug):
 
 
 def edit_player(request, league_slug, player_uuid):
-    player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
+
+    league = get_object_or_404(models.League, slug=league_slug)
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
+    player = get_object_or_404(models.Player, league=league, uuid=player_uuid)
     return model_form_view(
         request,
         forms.PlayerForm,
@@ -385,7 +409,11 @@ def create_stage(request, league_slug):
 
 
 def edit_stage(request, league_slug, stage_slug):
-    stage = get_object_or_404(models.Stage, league__slug=league_slug, slug=stage_slug)
+    league = get_object_or_404(models.League, slug=league_slug)
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
+    stage = get_object_or_404(models.Stage, league=league, slug=stage_slug)
     return model_form_view(
         request,
         forms.StageForm,
@@ -655,6 +683,8 @@ def create_multiple_matches(request, league_slug):
 
 def edit_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
     old_stage = match.stage
     return model_form_view(
@@ -696,3 +726,35 @@ def delete_match(request, league_slug, match_uuid):
                 league=league,
             ),
         )
+
+
+def login(request, league_slug, key):
+    league = get_object_or_404(models.League, slug=league_slug)
+
+    if league.write_protected:
+        if key != league.write_key:
+            raise PermissionDenied()
+        if league_slug not in request.session.get("logins", []):
+            request.session["logins"] = request.session.get("logins", []) + [league_slug]
+
+    return http.HttpResponseRedirect(
+        reverse("view_league", args=[league.slug])
+    )
+
+
+def logout(request, league_slug):
+    try:
+        logins = request.session["logins"]
+    except KeyError:
+        pass
+    else:
+        # NOTE: We need to assign to request.session dictionary, otherwise
+        # Django doesn't notice it has been altered and it won't update the
+        # session
+        request.session["logins"] = [
+            x for x in request.session["logins"]
+            if x != league_slug
+        ]
+    return http.HttpResponseRedirect(
+        reverse("view_league", args=[league_slug])
+    )

@@ -79,4 +79,14 @@ urlpatterns = [
         views.delete_match,
         name="delete_match",
     ),
+    path(
+        "league/<slug:league_slug>/login/<key>/",
+        views.login,
+        name="login",
+    ),
+    path(
+        "league/<slug:league_slug>/logout/",
+        views.logout,
+        name="logout",
+    ),
 ]

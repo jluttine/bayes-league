@@ -42,13 +42,21 @@
             {% endif %}
             {% endfor %}
 
+            {% if not league.write_protected or league.slug in logins %}
             <a class="navbar-item" href="{% url 'edit_league' league.slug %}">
               Settings
             </a>
+            {% endif %}
 
             <a class="navbar-item" href="{% url 'info' league.slug %}">
               Info
             </a>
+
+            {% if league.write_protected and league.slug in logins %}
+            <a class="navbar-item" href="{% url 'logout' league.slug %}">
+              Logout
+            </a>
+            {% endif %}
 
           </div>
 

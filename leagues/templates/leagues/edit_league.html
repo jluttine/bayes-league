@@ -20,6 +20,7 @@
       <thead>
         <tr>
           <th>Stage</th>
+          <th>Includes</th>
           <th>Bonus</th>
           <th>Move</th>
           <th></th>
@@ -30,6 +31,13 @@
         <tr>
           <td>
             {{ stage.name }}
+          </td>
+          <td>
+            <ul>
+              {% for s in stage.included.all %}
+              <li>{{ s.name }}</li>
+              {% endfor %}
+            </ul>
           </td>
           <td>
             {% if stage.bonus != None %}

@@ -197,7 +197,7 @@ def edit_league(request, league_slug):
             ),
         ),
         instance=league,
-        redirect=lambda write_protected, **_: update_ranking(
+        redirect=lambda **_: update_ranking(
             league,
             *league.stage_set.all(),
             # Log in just to make sure we won't be locked out if we enabled
@@ -206,7 +206,7 @@ def edit_league(request, league_slug):
                 reverse(
                     "login",
                     args=[league.slug, league.write_key],
-                ) if write_protected else
+                ) if league.write_protected else
                 reverse(
                     "view_league",
                     args=[league.slug],

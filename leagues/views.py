@@ -113,7 +113,7 @@ def view_league(request, league_slug):
                     player=p,
                     score=p.score,
                 )
-                for p in league.player_set.all().order_by("-score")
+                for p in league.player_set.all().order_by("-score", "name")
             ],
         )
     )

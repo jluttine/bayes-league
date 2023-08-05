@@ -315,7 +315,7 @@ class RankingScore(models.Model):
     score = models.FloatField(blank=True, null=True, default=None)
 
     class Meta:
-        ordering = ["-score"]
+        ordering = ["-score", "player__name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["stage", "player"],

@@ -10,6 +10,7 @@ from django.forms import inlineformset_factory, formset_factory
 from django.conf import settings
 from django.db.models import Q
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 
 from . import models
 from . import forms
@@ -275,6 +276,32 @@ def edit_player(request, league_slug, player_uuid):
         instance=player,
     )
 
+
+def delete_player(request, league_slug, player_uuid):
+
+    league = get_object_or_404(models.League, slug=league_slug)
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
+    player = get_object_or_404(models.Player, league=league, uuid=player_uuid)
+
+    if request.method == "POST":
+        try:
+            player.delete()
+        except IntegrityError:
+            pass
+        else:
+            return http.HttpResponseRedirect(
+                reverse("view_league", args=[league.slug])
+            )
+    return render(
+        request,
+        "leagues/delete_player.html",
+        dict(
+            player=player,
+            league=league,
+        ),
+    )
 
 def calculate_ranking(matches):
     # FIXME: One should be able to avoid reading Player table because we only

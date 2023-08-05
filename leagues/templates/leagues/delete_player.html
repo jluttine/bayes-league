@@ -1,0 +1,39 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+
+{% if player.home_match_set.exists or player.away_match_set.exists %}
+
+<h1>Player deletion prevented</h1>
+
+<p>
+Player: {{ player.name }}
+</p>
+
+<p>
+The player cannot be deleted because they play (or have played) in matches. You need to delete the matches (or somehow remove the player from the matches) being able to delete the player.
+</p>
+
+<a class="button is-primary is-light" href="{% url 'edit_player' player.league.slug player.uuid %}">Go back</a>
+
+{% else %}
+
+<h1>Delete player?</h1>
+
+Are you sure you want to delete the following player permanently?
+
+<div class="block">
+  Player: {{ player.name }}
+</div>
+
+<form action="{% url 'delete_player' player.league.slug player.uuid %}" method="post">
+    {% csrf_token %}
+    <input class="button is-danger" type="submit" value="Yes, delete">
+    <a class="button is-primary" href="{% url 'edit_player' player.league.slug player.uuid %}">
+        No, cancel
+    </a>
+</form>
+
+{% endif %}
+
+{% endblock %}

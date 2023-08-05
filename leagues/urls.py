@@ -40,6 +40,11 @@ urlpatterns = [
         name="edit_player",
     ),
     path(
+        "league/<slug:league_slug>/players/delete/<uuid:player_uuid>/",
+        views.delete_player,
+        name="delete_player",
+    ),
+    path(
         "league/<slug:league_slug>/stages/add/",
         views.create_stage,
         name="create_stage",

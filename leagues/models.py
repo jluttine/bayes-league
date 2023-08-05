@@ -257,10 +257,12 @@ class Match(models.Model):
     home_team = models.ManyToManyField(
         Player,
         related_name="home_match_set",
+        through="HomeTeamPlayer",
     )
     away_team = models.ManyToManyField(
         Player,
         related_name="away_match_set",
+        through="AwayTeamPlayer",
     )
     datetime = models.DateTimeField(
         # NOTE: Don't use auto_now_add so the datetime can be edited
@@ -283,6 +285,18 @@ class Match(models.Model):
 
     def __str__(self):
         return f"{self.uuid}"
+
+
+class HomeTeamPlayer(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    # Don't let players be deleted if they are assigned to a match
+    player = models.ForeignKey(Player, on_delete=models.PROTECT)
+
+
+class AwayTeamPlayer(models.Model):
+    match = models.ForeignKey(Match, on_delete=models.CASCADE)
+    # Don't let players be deleted if they are assigned to a match
+    player = models.ForeignKey(Player, on_delete=models.PROTECT)
 
 
 class Period(models.Model):

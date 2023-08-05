@@ -19,14 +19,24 @@ class League(models.Model):
     write_protected = models.BooleanField(default=False)
     write_key = models.CharField(
         null=True,
+        blank=True,
         default=None,
         max_length=50,
         unique=True,
     )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
-    # TODO:
-    # - password
-    # - public / unlisted / private
+
+    class Meta:
+        constraints = [
+            # If the league is write-protected, it must have a write key
+            models.CheckConstraint(
+                check=(
+                    models.Q(write_protected=False) |
+                    models.Q(write_key__isnull=False)
+                ),
+                name="write_key_if_write_protected",
+            ),
+        ]
 
     def clean(self):
         # Create a key when write-protection is enabled

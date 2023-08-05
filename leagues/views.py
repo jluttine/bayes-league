@@ -237,6 +237,10 @@ def view_player(request, league_slug, player_uuid):
 
 def create_player(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
     player = models.Player(league=league)
     return model_form_view(
         request,
@@ -418,6 +422,10 @@ def update_ranking(league, *stages, redirect=None):
 
 def create_stage(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
     stage = models.Stage(league=league)
     return model_form_view(
         request,
@@ -480,6 +488,10 @@ def view_stage(request, league_slug, stage_slug):
 
 def create_match(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
     match = models.Match(league=league)
     return model_form_view(
         request,
@@ -630,6 +642,9 @@ def create_even_matches(players):
 
 def create_multiple_matches(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
 
     if request.method == "POST":
 

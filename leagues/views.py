@@ -584,7 +584,7 @@ def create_even_matches(players):
         odd_player = np.lexsort(
             (
                 # 2nd criterion: worst ranking
-                np.array([p.score for p in players]),
+                np.array([-np.inf if p.score is None else p.score for p in players]),
                 # 1st criterion: least matches played
                 np.sum(C, axis=0),
             )

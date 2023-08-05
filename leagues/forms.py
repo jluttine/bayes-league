@@ -119,7 +119,7 @@ class DummyMatchForm(ModelForm):
 
 
 class BulkMatchForm(Form):
-    players = ModelMultipleChoiceField(models.Player.objects.all())
+    players = PlayerMultipleChoiceField(models.Player.objects.all())
     # datetime = DateTimeField(
     #     initial=lambda: (
     #         timezone.now()

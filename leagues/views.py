@@ -458,7 +458,7 @@ def edit_stage(request, league_slug, stage_slug):
             stage,
             redirect=reverse(
                 "view_stage",
-                args=[league_slug, stage_slug],
+                args=[league.slug, stage.slug],
             ),
         ),
         context=dict(

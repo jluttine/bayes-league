@@ -432,7 +432,7 @@ def create_stage(request, league_slug):
         forms.StageForm,
         template="leagues/create_stage.html",
         redirect=lambda **_: reverse(
-            "view_league",
+            "edit_league",
             args=[league_slug],
         ),
         context=dict(

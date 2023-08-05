@@ -580,13 +580,26 @@ def create_even_matches(players):
         odd_matches = []
         remaining_players = np.arange(N)
     else:
-        opponent = np.lexsort(
+        # Find the "odd" player
+        odd_player = np.lexsort(
             (
-                R2[-1,:-1], # secondary key: ranking difference
-                C[-1,:-1], # primary key: match counts
+                # 2nd criterion: worst ranking
+                np.array([p.score for p in players]),
+                # 1st criterion: least matches played
+                np.sum(C, axis=0),
             )
         )[0]
-        odd_matches = [(opponent, N-1)]
+        opponent = np.lexsort(
+            (
+                # Secondary key: ranking difference
+                R2[odd_player],
+                # Primary key: match counts
+                C[odd_player],
+                # Pre key: not the odd player itself
+                np.arange(N) == odd_player,
+            )
+        )[0]
+        odd_matches = [(opponent, odd_player)]
         remaining_players = np.delete(np.arange(N), opponent)
 
     # Find the optimal by traversing all possible solutions recursively.

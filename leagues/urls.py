@@ -55,6 +55,11 @@ urlpatterns = [
         name="edit_stage",
     ),
     path(
+        "league/<slug:league_slug>/stages/delete/<slug:stage_slug>/",
+        views.delete_stage,
+        name="delete_stage",
+    ),
+    path(
         "league/<slug:league_slug>/stages/view/<slug:stage_slug>/",
         views.view_stage,
         name="view_stage",

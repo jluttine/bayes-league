@@ -469,6 +469,28 @@ def edit_stage(request, league_slug, stage_slug):
     )
 
 
+def delete_stage(request, league_slug, stage_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    if league.write_protected and league_slug not in request.session.get("logins", []):
+        raise PermissionDenied()
+
+    stage = get_object_or_404(models.Stage, league=league, slug=stage_slug)
+
+    if request.method == "POST":
+        stage.delete()
+        return http.HttpResponseRedirect(
+            reverse("view_league", args=[league.slug])
+        )
+    else:
+        return render(
+            request,
+            "leagues/delete_stage.html",
+            dict(
+                stage=stage,
+                league=league,
+            ),
+        )
+
 def view_stage(request, league_slug, stage_slug):
     stage = get_object_or_404(
         models.Stage,

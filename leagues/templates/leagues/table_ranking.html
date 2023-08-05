@@ -10,7 +10,11 @@
     <tbody>
       {% for row in rows %}
       <tr>
-        <td class="has-text-right">{{ forloop.counter }}.</td>
+        <td class="has-text-right">
+          {% ifchanged row.score %}
+          {{ forloop.counter }}.
+          {% endifchanged %}
+        </td>
         <td><a href="{% url 'view_player' league.slug row.player.uuid %}">{{ row.player.name }}</a></td>
         <td>{% if row.score is None %}-{% else %}{{ row.score|floatformat:0 }}{% endif %}</td>
       </tr>

@@ -65,7 +65,7 @@ Are you sure you want to delete the following match permanently?
 <form action="{% url 'delete_match' match.league.slug match.uuid %}" method="post">
     {% csrf_token %}
     <input class="button is-danger" type="submit" value="Yes, delete">
-    <a class="button is-primary" href="{% url 'view_league' match.league.slug %}">
+    <a class="button is-primary" href="{% url 'edit_match' match.league.slug match.uuid %}">
         No, cancel
     </a>
 </form>

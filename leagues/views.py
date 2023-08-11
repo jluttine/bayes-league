@@ -625,14 +625,58 @@ def create_even_matches(players):
         if len(ps) < 2:
             return ([], current_cost)
 
+        if len(ps) % 2 != 0:
+            raise RuntimeError("Only even number of players supported")
+
         # If we can't find better solutions, we'll just return Nones. No need to
         # bother finding locally best solution from this branch if we won't be
         # globally best anyway.
         retval = (None, None)
 
+        # Check if it's not possible even in theory to find better solutions,
+        # stop immediately.
+        #
+        # Minimum match counts for each player if we allow the same
+        # opponents to be chosen multiple times
+        # C_lowerbound = np.sum(
+        #     np.amin(
+        #         C[
+        #             # Rows are players
+        #             ps[:,None],
+        #             # Columns are opponents
+        #             np.broadcast_to(ps, (len(ps), len(ps)))
+        #             # Add inf to diagonal so we ignore playing against
+        #             # themselves
+        #         ] + np.diag(np.full(len(ps), np.inf)),
+        #         axis=-1,
+        #     )
+        # )
+        C_lowerbound = 0
+        # Minimum ranking difference costs are obtained by pairing 1v2,
+        # 3vs4, 5vs6, etc
+        R2_lowerbound = np.sum(R2[ps[0::2], ps[1::2]])
+        # Combine lowerbounds
+        cost_lowerbound = (
+            current_cost[0] + C_lowerbound,
+            current_cost[1] + R2_lowerbound,
+        )
+        if cost_lowerbound >= best_cost:
+            return retval
+
         p0 = ps[0]
+
+        prefs = np.lexsort(
+            [
+                # Secondary key: ranking difference
+                R2[p0, ps],
+                # Primary key: match counts
+                C[p0, ps],
+                # Pre key: keep the player itself first
+                np.arange(len(ps)) != 0,
+            ]
+        )
         for j in range(1, len(ps)):
-            p1 = ps[j]
+            p1 = ps[prefs[j]]
             # Current cost at this depth
             current_cost_new = (
                 current_cost[0] + C[p0, p1],
@@ -645,7 +689,7 @@ def create_even_matches(players):
 
             # Go deeper!
             (proposal_matches, proposal_cost) = find_optimal_pairings(
-                np.delete(ps, [0, j]),
+                np.delete(ps, [0, prefs[j]]),
                 best_cost,
                 current_cost_new,
             )

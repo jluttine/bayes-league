@@ -534,6 +534,62 @@ def create_match(request, league_slug):
     )
 
 
+def find_r2_cost_lowerbound(R2_masked):
+    """Given a distance matrix find a lower bound for total pairing distance
+
+    "Illegal" pairings should be marked with infs before calling this function.
+
+    Then, taking into account only the legal pairings, we'll find the lower
+    bound as follows:
+
+    1. Find the nearest opponent for each player
+
+    2. Order the players by how far their nearest opponents are
+
+    3. Starting from the worst player (i.e., whose nearest opponent is
+       furthest), add this distance to the total cost and remove this opponent's
+       own entry (i.e., mark its nearest opponent distance with nan)
+
+    4. For the remaining players, go back to step 3 unless it has been computed
+       N/2 times already (i.e., as many times as there should be games)
+
+    Explanation: As each player is going to play, the largest of the shortest
+    distances cannot be avoided so it should be included in the total cost. To
+    avoid computing the same distance twice, we remove that opponent's own row
+    (even if that opponent was preferring some other player).
+
+    So, in the end we have a set of N/2 players who aren't each others nearest
+    opponents. As each of those player is going to play, their minimum distances
+    will form a lower bound.
+
+    Proof: Not absolutely sure if this is true. Try to proof this more
+    rigorously. But in practice this gives a hell of a speed up! From 1min to
+    2ms.
+
+    """
+    N = np.shape(R2_masked)[0]
+    optimal_opponents = np.argmin(R2_masked, axis=-1)
+    optimal_r2 = R2_masked[np.arange(N), optimal_opponents]
+    # We'll go through R2 costs starting from the worst (largest)
+    ordering = np.argsort(-optimal_r2)
+
+    count = 0
+    cost = 0
+    for n in range(N):
+        i = ordering[n]
+        if np.isnan(optimal_r2[i]):
+            continue
+        else:
+            j = optimal_opponents[i]
+            optimal_r2[j] = np.nan
+            cost += optimal_r2[i]
+            count += 1
+        if 2 * count >= N:
+            break
+
+    return cost
+
+
 def create_even_matches(players):
     # Sort players based on ranking
     players = sorted(
@@ -652,9 +708,23 @@ def create_even_matches(players):
         #     )
         # )
         C_lowerbound = 0
-        # Minimum ranking difference costs are obtained by pairing 1v2,
-        # 3vs4, 5vs6, etc
-        R2_lowerbound = np.sum(R2[ps[0::2], ps[1::2]])
+        # Simple lower bound: Minimum ranking difference costs are obtained by
+        # pairing 1v2, 3vs4, 5vs6, etc
+        #
+        # R2_lowerbound = np.sum(R2[ps[0::2], ps[1::2]])
+        #
+        # However, that's not good enough when there are pairings with small
+        # ranking differences but bad match counts. So, we need to find a lower
+        # bound based on what's allowed by the match count constraint.
+        R2_lowerbound = find_r2_cost_lowerbound(
+            # Masked distance matrix. Illegal matches are marked with inf.
+            np.where(
+                C[ps[:,None],ps[None,:]] + current_cost[0] > best_cost[0],
+                np.inf,
+                R2[ps[:,None],ps[None,:]]
+            ) + np.diag(np.full(len(ps), np.inf))
+        )
+
         # Combine lowerbounds
         cost_lowerbound = (
             current_cost[0] + C_lowerbound,

@@ -132,5 +132,6 @@ class BulkMatchForm(Form):
     def __init__(self, league, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["players"].queryset = models.Player.objects.filter(league=league)
+        self.fields["players"].initial = self.fields["players"].queryset
         #self.fields["datetime"].initial = timezone.now()
         return

@@ -32,7 +32,7 @@ def read_secret_key():
             return f.read()
     else:
         try:
-            json_settings["SECRET_KEY"]
+            return json_settings["SECRET_KEY"]
         except KeyError:
             if DEBUG:
                 return 'django-insecure-ukmj18m(eti9_j@1k8x4wvm(s#!*hbxa8k=_)z+vj24cwe8+yv'

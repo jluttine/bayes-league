@@ -12,18 +12,15 @@ Install dependencies (Django) in your preferred way. For instance:
 pip install django autograd scipy
 ```
 
-Initialize the local database (run only once):
+Initialize the local database (run this whenever you update the code too):
 
 ``` shell
-python manage.py makemigrations
 python manage.py migrate
-
 ```
 
-Run the local server:
+Run the local development server:
 
 ``` shell
-
 python manage.py runserver
 ```
 

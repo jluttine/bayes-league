@@ -22,7 +22,7 @@ def team_scores(x, jss):
     ])
 
 
-def calculate_ranking(X, n_players):
+def calculate_ranking(X, n_players, regularisation):
     """
     Format of X:
 
@@ -51,7 +51,19 @@ def calculate_ranking(X, n_players):
         logz = np.logaddexp(home_x, away_x)
         logp = home_x - logz
         logq = away_x - logz
-        return -np.sum(k_home*logp + k_away*logq)
+        # The "imaginary" player for regularisation purposes has a fixed ranking
+        # score 0.
+        logz_reg = np.logaddexp(x, 0)
+        logp_reg = x - logz_reg
+        logq_reg = 0 - logz_reg
+        return (
+            -np.sum(k_home*logp + k_away*logq)
+            # Regularisation: Add an "imaginary" player against whom all players
+            # have played 1v1 match with result 1-1, or actually, x-x where x is
+            # the given regularisation parameter. Note that it doesn't need to
+            # be integer.
+            -np.sum(regularisation*logp_reg + regularisation*logq_reg)
+        )
 
     res = minimize(
         negloglikelihood,

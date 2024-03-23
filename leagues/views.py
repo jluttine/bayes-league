@@ -307,7 +307,7 @@ def delete_player(request, league_slug, player_uuid):
         ),
     )
 
-def calculate_ranking(matches):
+def calculate_ranking(matches, regularisation):
     # FIXME: One should be able to avoid reading Player table because we only
     # need some keys to identify the players and such keys should be in Match
     # table already. Then, remove prefetch_related.
@@ -342,6 +342,7 @@ def calculate_ranking(matches):
             if m.total_home_points is not None
         ],
         len(p2id),
+        regularisation,
     )
     return (ps, rs)
 
@@ -353,7 +354,7 @@ def update_league_ranking(league):
         .prefetch_related("away_team")
         .filter(league=league)
     )
-    (ps, rs) = calculate_ranking(ms)
+    (ps, rs) = calculate_ranking(ms, league.regularisation)
 
     # Find ranking scores for each player in the league
     prs = {p.uuid: r for (p, r) in zip(ps, rs)}
@@ -366,7 +367,7 @@ def update_league_ranking(league):
     return
 
 
-def update_stage_ranking(stage):
+def update_stage_ranking(stage, regularisation):
     if stage is None:
         return
     # Matches contained in the stage
@@ -376,7 +377,7 @@ def update_stage_ranking(stage):
         .prefetch_related("home_team")
         .prefetch_related("away_team")
     )
-    (ps, rs) = calculate_ranking(ms)
+    (ps, rs) = calculate_ranking(ms, regularisation)
 
     # NOTE: Perhaps deletion and creation could be combined by using bulk_create
     # with update_conflicts and update_fields. However, we would still need to
@@ -413,7 +414,7 @@ def update_ranking(league, *stages, redirect=None):
     )
 
     for stage in stages:
-        update_stage_ranking(stage)
+        update_stage_ranking(stage, league.regularisation)
     return redirect if redirect is not None else reverse(
         "view_league",
         args=[league.slug],

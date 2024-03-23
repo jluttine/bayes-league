@@ -5,6 +5,7 @@ from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from ordered_model.models import OrderedModel
 
 
@@ -16,6 +17,10 @@ class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
     title = models.CharField(max_length=100)
     bonus = models.PositiveIntegerField(default=0)
+    regularisation = models.FloatField(
+        default=0,
+        validators=[MinValueValidator(0)]
+    )
     write_protected = models.BooleanField(default=False)
     write_key = models.CharField(
         null=True,
@@ -35,6 +40,10 @@ class League(models.Model):
                     models.Q(write_key__isnull=False)
                 ),
                 name="write_key_if_write_protected",
+            ),
+            models.CheckConstraint(
+                check=models.Q(regularisation__gte=0),
+                name="regularisation_gte_0",
             ),
         ]
 

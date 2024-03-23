@@ -18,7 +18,7 @@ class League(models.Model):
     title = models.CharField(max_length=100)
     bonus = models.PositiveIntegerField(default=0)
     regularisation = models.FloatField(
-        default=0,
+        default=1,
         validators=[MinValueValidator(0)]
     )
     write_protected = models.BooleanField(default=False)

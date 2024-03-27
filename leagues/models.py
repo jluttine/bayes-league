@@ -17,6 +17,7 @@ class League(models.Model):
     slug = models.SlugField(max_length=30, unique=True)
     title = models.CharField(max_length=100)
     bonus = models.PositiveIntegerField(default=0)
+    points_to_win = models.PositiveIntegerField(default=21)
     regularisation = models.FloatField(
         default=1,
         validators=[MinValueValidator(0)]
@@ -87,6 +88,11 @@ class Stage(OrderedModel):
         "self",
         symmetrical=False,
         blank=True,
+    )
+    points_to_win = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        default=None,
     )
     bonus = models.PositiveIntegerField(
         blank=True,

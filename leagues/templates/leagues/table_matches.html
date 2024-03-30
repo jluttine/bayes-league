@@ -18,7 +18,7 @@
       {% for match in matches %}
       <tr>
         <td>
-          {{ match.datetime_finished|date:'Y-m-d H:i' }}
+          {{ match.datetime_started|date:'Y-m-d H:i' }}
         </td>
         <td>
           {% for player in match.home_team.all %}

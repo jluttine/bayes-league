@@ -246,6 +246,7 @@ class MatchManager(models.Manager):
             #     output_field=models.DateTimeField(null=True),
             # ),
             datetime_finished=models.Max("period__datetime"),
+            datetime_started=models.Min("period__datetime"),
         ).distinct().order_by(
             "stage",
             models.F("datetime_finished").desc(nulls_first=True),

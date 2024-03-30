@@ -89,3 +89,28 @@ def calculate_ranking(X, n_players, regularisation):
         scores[i] = None
 
     return scores
+
+
+def score_to_logp(x):
+    return x / 10 * np.log(2)
+
+
+def score_to_p(x):
+    return 2 ** (x / 10)
+
+
+def scores_to_p_and_q(x, y):
+    logp = score_to_logp(x)
+    logq = score_to_logp(y)
+    logz = np.logaddexp(logp, logq)
+    return (
+        np.exp(logp - logz),
+        np.exp(logq - logz),
+    )
+
+
+def score_to_result(x, y, n):
+    return (
+        (n, np.floor(n * score_to_p(y - x))) if x >= y else
+        (np.floor(n * score_to_p(x - y)), n)
+    )

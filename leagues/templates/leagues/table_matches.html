@@ -8,9 +8,7 @@
         <th>Away team</th>
         <th>Result</th>
         <th>Bonus</th>
-        {% if not league.write_protected or league.slug in logins %}
         <th></th>
-        {% endif %}
       </tr>
     </thead>
     <tbody>
@@ -63,11 +61,21 @@
           {% endif %}
           {% endif %}
         </td>
-        {% if not league.write_protected or league.slug in logins %}
         <td>
-          <a href="{% url 'edit_match' league.slug match.uuid %}">Edit</a>
+          <a href="{% url 'view_match' league.slug match.uuid %}">
+            <span class="icon material-symbols-outlined">
+            query_stats
+            </span>
+          </a>
+          &nbsp;
+          {% if not league.write_protected or league.slug in logins %}
+          <a href="{% url 'edit_match' league.slug match.uuid %}">
+            <span class="icon material-symbols-outlined">
+              edit
+            </span>
+          </a>
+          {% endif %}
         </td>
-        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

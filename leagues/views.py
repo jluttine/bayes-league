@@ -873,6 +873,23 @@ def create_multiple_matches(request, league_slug):
         )
 
 
+def view_match(request, league_slug, match_uuid):
+    league = get_object_or_404(models.League, slug=league_slug)
+    match = get_object_or_404(
+        models.Match.objects.with_total_points(),
+        league=league,
+        uuid=match_uuid,
+    )
+    return render(
+        request,
+        "leagues/view_match.html",
+        dict(
+            league=league,
+            match=match,
+        ),
+    )
+
+
 def edit_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     if league.write_protected and league_slug not in request.session.get("logins", []):

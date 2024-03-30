@@ -1,12 +1,16 @@
 import uuid
 import secrets
 
+import numpy as np
+
 from django.db import models
 from django.utils import timezone
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
 from ordered_model.models import OrderedModel
+
+from . import ranking
 
 
 def create_key():
@@ -212,6 +216,12 @@ class MatchManager(models.Manager):
         ).annotate(
             away_periods=models.Count("period", distinct=True),
         )
+        home_ranking_score = self.annotate(
+            home_ranking_score=models.Avg("home_team__score")
+        ).filter(pk=models.OuterRef("pk"))
+        away_ranking_score = self.annotate(
+            away_ranking_score=models.Avg("away_team__score")
+        ).filter(pk=models.OuterRef("pk"))
         # datetime_finished = self.filter(
         #     pk=models.OuterRef("pk"),
         # ).annotate(
@@ -224,6 +234,10 @@ class MatchManager(models.Manager):
             bonus=models.Case(
                 models.When(stage__bonus=None, then=models.F("league__bonus")),
                 default=models.F("stage__bonus")
+            ),
+            points_to_win=models.Case(
+                models.When(stage__points_to_win=None, then=models.F("league__points_to_win")),
+                default=models.F("stage__points_to_win"),
             ),
             home_periods=models.functions.Coalesce(
                 models.Subquery(
@@ -239,6 +253,14 @@ class MatchManager(models.Manager):
                 ),
                 0,
             ),
+            home_ranking_score=models.Subquery(
+                home_ranking_score.values("home_ranking_score"),
+                output_field=models.FloatField(),
+            ),
+            away_ranking_score=models.Subquery(
+                away_ranking_score.values("away_ranking_score"),
+                output_field=models.FloatField(),
+            ),
             home_bonus=models.F("bonus") * models.F("home_periods"),
             away_bonus=models.F("bonus") * models.F("away_periods"),
             # datetime_finished=models.Subquery(
@@ -247,6 +269,8 @@ class MatchManager(models.Manager):
             # ),
             datetime_finished=models.Max("period__datetime"),
             datetime_started=models.Min("period__datetime"),
+            max_home_points=models.Max("period__home_points"),
+            max_away_points=models.Max("period__away_points"),
         ).distinct().order_by(
             "stage",
             models.F("datetime_finished").desc(nulls_first=True),
@@ -292,6 +316,47 @@ class Match(models.Model):
 
     class Meta:
         ordering = ["-datetime"]
+
+    def has_result(self):
+        return (
+            self.total_home_points is not None and
+            self.total_away_points is not None and (
+                self.total_home_points > 0 or
+                self.total_away_points > 0
+            )
+        )
+
+    def expected_points(self):
+        points_to_win = (
+            self.points_to_win if self.max_home_points is None else
+            min(
+                self.points_to_win,
+                np.inf if self.max_home_points is None else max(
+                    self.max_home_points,
+                    self.max_away_points,
+                )
+            )
+        )
+        return ranking.score_to_result(
+            self.home_ranking_score,
+            self.away_ranking_score,
+            points_to_win,
+        )
+
+    def expected_point_ratio(self):
+        x = self.home_ranking_score
+        y = self.away_ranking_score
+        return (
+            (1000, 1000 * ranking.score_to_p(y - x)) if x > y else
+            (1000 * ranking.score_to_p(x - y), 1000)
+        )
+
+    def expected_point_win_percentages(self):
+        (p, q) = ranking.scores_to_p_and_q(
+            self.home_ranking_score,
+            self.away_ranking_score,
+        )
+        return (100 * p, 100 * q)
 
     def clean(self):
         if self.stage is not None and self.stage.league != self.league:

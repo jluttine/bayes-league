@@ -33,6 +33,7 @@
           <th>Stage</th>
           <th>Includes</th>
           <th>Bonus</th>
+          <th>Period points</th>
           <th>Move</th>
           <th></th>
         </tr>
@@ -55,6 +56,13 @@
             {{ stage.bonus }}
             {% else %}
             {{ stage.league.bonus }} (league default)
+            {% endif %}
+          </td>
+          <td>
+            {% if stage.points_to_win != None %}
+            {{ stage.points_to_win }}
+            {% else %}
+            {{ stage.league.points_to_win }} (league default)
             {% endif %}
           </td>
           <td>

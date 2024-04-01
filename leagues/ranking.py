@@ -2,6 +2,7 @@ import functools
 
 import numpy
 from scipy.optimize import minimize
+from scipy.stats import binom
 
 # Would be nice to use jax instead of autograd but unfortunately it doesn't work
 # on all machines
@@ -99,6 +100,13 @@ def score_to_p(x):
     return 2 ** (x / 10)
 
 
+def scores_to_p(x, y):
+    logp = score_to_logp(x)
+    logq = score_to_logp(y)
+    logz = np.logaddexp(logp, logq)
+    return np.exp(logp - logz)
+
+
 def scores_to_p_and_q(x, y):
     logp = score_to_logp(x)
     logq = score_to_logp(y)
@@ -114,3 +122,35 @@ def score_to_result(x, y, n):
         (n, np.floor(n * score_to_p(y - x))) if x >= y else
         (np.floor(n * score_to_p(x - y)), n)
     )
+
+
+def scores_to_period_probabilities(x, y, n):
+    (p, q) = scores_to_p_and_q(x, y)
+    # The opponent doesn't reach n points
+    r = 100*binom.cdf(n-1, 2*n-1, q)
+    return (r, 100-r)
+
+
+def result_to_performance(
+        home_points,
+        away_points,
+        home_ranking_score,
+        away_ranking_score,
+):
+    n = home_points + away_points
+    p = scores_to_p(home_ranking_score, away_ranking_score)
+    P0 = 0 if home_points == 0 else binom.cdf(home_points - 1, n, p)
+    P1 = binom.cdf(home_points, n, p)
+    P = 100 * (P0 + P1) / 2
+    return (P, 100-P)
+
+
+def result_to_surprisingness(x, p, n):
+    logP0 = -np.inf if x == 0 else binom.logcdf(x-1, n, p)
+    logP1 = binom.logcdf(x, n, p)
+    # Average of the two CDF values.
+    logP = np.logaddexp(logP0, logP1) - np.log(2)
+    # Switch to bits
+    log2P = logP / np.log(2)
+    # Return log-odds
+    return log2P - np.log2(1 - 2**log2P)

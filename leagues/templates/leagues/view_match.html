@@ -25,122 +25,40 @@
     </thead>
     <tbody>
       <tr>
-        <td class="has-text-right">
+        <td class="has-text-right is-size-5 has-text-weight-bold">
           Players
         </td>
-        <td class="has-text-centered">
-          {% for player in match.home_team.all %}
-          <a href="{% url 'view_player' league.slug player.uuid %}">
-            {% if player == selected_player %}
-            <b>{{ player.name }}</b>
-            {% else %}
-            {{ player.name }}
-            {% endif %}
-          </a><br />
-          {% endfor %}
+        <td class="has-text-centered is-size-5 has-text-weight-bold">
+          {% include "leagues/player_list.html" with players=match.home_team.all selected_player=selected_player %}
         </td>
-        <td class="has-text-centered">
-          {% for player in match.away_team.all %}
-          <a href="{% url 'view_player' league.slug player.uuid %}">
-            {% if player == selected_player %}
-            <b>{{ player.name }}</b>
-            {% else %}
-            {{ player.name }}
-            {% endif %}
-          </a><br />
-          {% endfor %}
+        <td class="has-text-centered is-size-5 has-text-weight-bold">
+          {% include "leagues/player_list.html" with players=match.away_team.all selected_player=selected_player %}
         </td>
       </tr>
       {% if match.period_count > 0 %}
       {% if match.period_count > 1 %}
-      <tr>
-        <td class="has-text-right">
-          Periods
-        </td>
-        <td class="has-text-centered">
-          {{ match.home_periods }}
-        </td>
-        <td class="has-text-centered">
-          {{ match.away_periods }}
-        </td>
-      </tr>
+      {% include "leagues/match_stat_row.html" with label="Periods" xy=match.periods floatformat=0 classes="is-size-5 has-text-weight-bold" %}
       {% for p in match.period_set.all %}
-      <tr>
-        <td class="has-text-right">
-          Period {{ forloop.counter }}
-        </td>
-        <td class="has-text-centered">
-          {{ p.home_points }}
-        </td>
-        <td class="has-text-centered">
-          {{ p.away_points }}
-        </td>
-      </tr>
+      {% with n=forloop.counter|stringformat:"s" %}
+      {% include "leagues/match_stat_row.html" with label="Period "|add:n xy=p.points floatformat=0 %}
+      {% endwith %}
       {% endfor %}
+      {% include "leagues/match_stat_row.html" with label="Total points" xy=match.total_points floatformat=0 %}
+      {% else %}
+      {% include "leagues/match_stat_row.html" with label="Total points" xy=match.total_points floatformat=0 classes="is-size-5 has-text-weight-bold" %}
       {% endif %}
       {% if match.bonus != 0 %}
-      <tr>
-        <td class="has-text-right">
-          Bonus points
-        </td>
-        <td class="has-text-centered">
-        </td>
-        <td class="has-text-centered">
-        </td>
-      </tr>
+      {% include "leagues/match_stat_row.html" with label="Bonus points" xy=match.bonus_points floatformat=0 %}
       {% endif %}
-      <tr>
-        <td class="has-text-right">
-          Total points
-        </td>
-        <td class="has-text-centered">
-          {{ match.total_home_points }}
-        </td>
-        <td class="has-text-centered">
-          {{ match.total_away_points }}
-        </td>
-      </tr>
       {% endif %}
-      <tr>
-        <td class="has-text-right">
-          Ranking score
-        </td>
-        <td class="has-text-centered">
-          {{ match.home_ranking_score|floatformat:1 }}
-        </td>
-        <td class="has-text-centered">
-          {{ match.away_ranking_score|floatformat:1 }}
-        </td>
-      </tr>
-      <tr>
-        <td class="has-text-right">
-          Expected points
-        </td>
-        {% for p in match.expected_points %}
-        <td class="has-text-centered">
-          {{ p|floatformat:"0" }}
-        </td>
-        {% endfor %}
-      </tr>
-      <tr>
-        <td class="has-text-right">
-          Expected point wins
-        </td>
-        {% for p in match.expected_point_win_percentages %}
-        <td class="has-text-centered">
-          {{ p|floatformat:"0" }}&nbsp;%
-        </td>
-        {% endfor %}
-      </tr>
+      {% include "leagues/match_stat_row.html" with label="Ranking score" xy=match.ranking_scores floatformat=1 %}
+      {% include "leagues/match_stat_row.html" with label="Expected points" xy=match.expected_points floatformat=0 %}
+      {% include "leagues/match_stat_row.html" with label="Point win probability" xy=match.expected_point_win_percentages floatformat=1 suffix="&nbsp;%" %}
+      {% with sp=match.points_to_win_actual|stringformat:"s" %}
+      {% include "leagues/match_stat_row.html" with label="Period ("|add:sp|add:" p) win probability" xy=match.period_win_probabilities floatformat=1 suffix="&nbsp;%" %}
+      {% endwith %}
       {% if match.has_result %}
-      <tr>
-        <td class="has-text-right">
-          Surprisingness
-        </td>
-        <td class="has-text-centered" colspan="2">
-          TODO
-        </td>
-      </tr>
+      {% include "leagues/match_stat_row.html" with label="Performance" xy=match.performance floatformat=1 suffix="&nbsp;%" %}
       {% endif %}
     </tbody>
   </table>

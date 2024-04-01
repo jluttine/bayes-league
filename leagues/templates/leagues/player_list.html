@@ -1,0 +1,9 @@
+{% for player in players %}
+<a href="{% url 'view_player' league.slug player.uuid %}">
+  {% if player == selected_player %}
+  <b>{{ player.name }}</b>
+  {% else %}
+  {{ player.name }}
+  {% endif %}
+</a><br />
+{% endfor %}

@@ -326,8 +326,18 @@ class Match(models.Model):
             )
         )
 
-    def expected_points(self):
-        points_to_win = (
+    def surprisingness(self):
+        (p, _) = ranking.scores_to_p_and_q(
+            self.home_ranking_score,
+            self.away_ranking_score,
+        )
+        x = self.total_home_points
+        y = self.total_away_points
+        s = ranking.result_to_surprisingness(x, p, x+y)
+        return (s, -s)
+
+    def points_to_win_actual(self):
+        return (
             self.points_to_win if self.max_home_points is None else
             min(
                 self.points_to_win,
@@ -337,10 +347,12 @@ class Match(models.Model):
                 )
             )
         )
+
+    def expected_points(self):
         return ranking.score_to_result(
             self.home_ranking_score,
             self.away_ranking_score,
-            points_to_win,
+            self.points_to_win_actual(),
         )
 
     def expected_point_ratio(self):
@@ -357,6 +369,49 @@ class Match(models.Model):
             self.away_ranking_score,
         )
         return (100 * p, 100 * q)
+
+    def period_win_probabilities(self):
+        return ranking.scores_to_period_probabilities(
+            self.home_ranking_score,
+            self.away_ranking_score,
+            self.points_to_win_actual(),
+        )
+
+    @property
+    def total_points(self):
+        return (
+            self.total_home_points,
+            self.total_away_points,
+        )
+
+    @property
+    def periods(self):
+        return (
+            self.home_periods,
+            self.away_periods,
+        )
+
+    @property
+    def bonus_points(self):
+        return (
+            self.home_bonus,
+            self.away_bonus,
+        )
+
+    @property
+    def ranking_scores(self):
+        return (
+            self.home_ranking_score,
+            self.away_ranking_score,
+        )
+
+    def performance(self):
+        return ranking.result_to_performance(
+            self.total_home_points,
+            self.total_away_points,
+            self.home_ranking_score,
+            self.away_ranking_score,
+        )
 
     def clean(self):
         if self.stage is not None and self.stage.league != self.league:
@@ -388,6 +443,10 @@ class Period(models.Model):
         # NOTE: Don't use auto_now_add so the datetime can be edited
         default=timezone.now,
     )
+
+    @property
+    def points(self):
+        return (self.home_points, self.away_points)
 
 
 class RankingScore(models.Model):

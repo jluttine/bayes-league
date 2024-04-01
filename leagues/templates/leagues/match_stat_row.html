@@ -1,0 +1,11 @@
+<tr>
+  <td class="has-text-right {{ classes }}">
+    {{ label }}
+  </td>
+  <td class="has-text-centered {% include "leagues/coloring.html" with x=xy.0 y=xy.1 %} {{ classes }}">
+    {{ xy.0|floatformat:floatformat }}{{ suffix }}
+  </td>
+  <td class="has-text-centered {% include "leagues/coloring.html" with x=xy.1 y=xy.0 %} {{ classes }}">
+    {{ xy.1|floatformat:floatformat }}{{ suffix }}
+  </td>
+</tr>

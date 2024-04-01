@@ -337,15 +337,13 @@ class Match(models.Model):
         return (s, -s)
 
     def points_to_win_actual(self):
+        s = max(
+            0 if self.max_home_points is None else self.max_home_points,
+            0 if self.max_home_points is None else self.max_away_points,
+        )
         return (
-            self.points_to_win if self.max_home_points is None else
-            min(
-                self.points_to_win,
-                np.inf if self.max_home_points is None else max(
-                    self.max_home_points,
-                    self.max_away_points,
-                )
-            )
+            self.points_to_win if s == 0 else
+            min(self.points_to_win, s)
         )
 
     def expected_points(self):

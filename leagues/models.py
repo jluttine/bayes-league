@@ -404,6 +404,11 @@ class Match(models.Model):
         )
 
     def performance(self):
+        if self.total_home_points is None or self.total_away_points is None:
+            return (
+                (np.nan, np.nan),
+                (0, 0, 0, 0),
+            )
         p = ranking.result_to_performance(
             self.total_home_points,
             self.total_away_points,

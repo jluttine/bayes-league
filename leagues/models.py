@@ -406,11 +406,21 @@ class Match(models.Model):
         )
 
     def performance(self):
-        return ranking.result_to_performance(
+        p = ranking.result_to_performance(
             self.total_home_points,
             self.total_away_points,
             self.home_ranking_score,
             self.away_ranking_score,
+        )
+        s = np.log2(p[0]/100) - (np.log2(1-p[0]/100))
+        return (
+            p,
+            (
+                np.maximum(0, np.floor(s).astype(int)), # home stars
+                np.maximum(0, np.floor(-s).astype(int)), # home failures
+                np.maximum(0, np.floor(-s).astype(int)), # away stars
+                np.maximum(0, np.floor(s).astype(int)), # away failures
+            ),
         )
 
     def clean(self):

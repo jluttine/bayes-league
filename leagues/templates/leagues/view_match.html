@@ -58,7 +58,9 @@
       {% include "leagues/match_stat_row.html" with label="Period ("|add:sp|add:" p) win probability" xy=match.period_win_probabilities floatformat=1 suffix="&nbsp;%" %}
       {% endwith %}
       {% if match.has_result %}
-      {% include "leagues/match_stat_row.html" with label="Performance" xy=match.performance floatformat=1 suffix="&nbsp;%" %}
+      {% with p=match.performance %}
+      {% include "leagues/match_stat_row.html" with label="Performance" xy=p.0 floatformat=1 suffix="&nbsp;%&nbsp;" stars=p.1 %}
+      {% endwith %}
       {% endif %}
     </tbody>
   </table>

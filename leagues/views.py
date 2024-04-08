@@ -9,7 +9,7 @@ from django.urls import reverse
 from django.forms import inlineformset_factory, formset_factory
 from django.conf import settings
 from django.db.models import Q
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import PermissionDenied, MultipleObjectsReturned
 from django.db import IntegrityError
 
 from . import models
@@ -887,6 +887,35 @@ def view_match(request, league_slug, match_uuid):
             league=league,
             match=match,
         ),
+    )
+
+
+def start_match(request, league_slug, match_uuid):
+    league = get_object_or_404(models.League, slug=league_slug)
+    match = get_object_or_404(
+        models.Match.objects.with_total_points(),
+        league=league,
+        uuid=match_uuid,
+    )
+    try:
+        # FIXME: This isn't atomic, so it's possible that simultaneous Start
+        # requests will create multiple periods..
+        models.Period.objects.get_or_create(
+            match=match,
+            defaults=dict(
+                home_points=0,
+                away_points=0,
+            ),
+        )
+    except MultipleObjectsReturned:
+        pass
+
+    # Go back to where you came from
+    return http.HttpResponseRedirect(
+        request.META.get(
+            'HTTP_REFERER',
+            reverse("view_match", args=[league.slug, match.uuid]),
+        )
     )
 
 

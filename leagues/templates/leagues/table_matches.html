@@ -49,6 +49,10 @@
           {% if match.period_count > 1 %}
           ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
           {% endif %}
+          {% elif not league.write_protected or league.slug in logins %}
+          <a class="button is-primary" href="{% url 'start_match' league.slug match.uuid %}">
+            Start
+          </a>
           {% endif %}
 
         </td>

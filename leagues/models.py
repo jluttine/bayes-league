@@ -447,13 +447,23 @@ class Match(models.Model):
             self.away_ranking_score,
         )
         s = np.log2(p[0]/100) - (np.log2(1-p[0]/100))
+        home_stars = np.clip(
+            np.floor(s).astype(int),
+            0,
+            5,
+        )
+        away_stars = np.clip(
+            np.floor(-s).astype(int),
+            0,
+            5,
+        )
         return (
             p,
             (
-                np.maximum(0, np.floor(s).astype(int)), # home stars
-                np.maximum(0, np.floor(-s).astype(int)), # home failures
-                np.maximum(0, np.floor(-s).astype(int)), # away stars
-                np.maximum(0, np.floor(s).astype(int)), # away failures
+                home_stars,
+                away_stars,
+                away_stars,
+                home_stars,
             ),
         )
 

@@ -68,11 +68,17 @@
         <td class="has-text-right">
           <a href="{% url 'view_match' league.slug match.uuid %}">
             {% with p=match.performance %}
+            {% if match.is_home %}
+            {% include "leagues/stars.html" with notify=0 stars=p.1.0 sad=p.1.1 %}
+            {% elif match.is_away %}
+            {% include "leagues/stars.html" with notify=0 stars=p.1.2 sad=p.1.3 %}
+            {% else %}
             {% include "leagues/stars.html" with notify=p.1.0 stars=0 sad=0 %}
             {% include "leagues/stars.html" with notify=p.1.1 stars=0 sad=0 %}
             &nbsp;
             &nbsp;
             &nbsp;
+            {% endif %}
             {% endwith %}
             <span class="icon material-symbols-outlined">
             query_stats

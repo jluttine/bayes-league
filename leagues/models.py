@@ -190,7 +190,7 @@ class MatchManager(models.Manager):
             models.Q(home_team__in=players) & models.Q(away_team__in=players)
         ).distinct()
 
-    def with_total_points(self):
+    def with_total_points(self, player=None):
         # NOTE: Multiple annotations yield wrong results. So, we need to use a
         # bit more complex solution with subqueries. See:
         # https://stackoverflow.com/a/56619484
@@ -222,12 +222,43 @@ class MatchManager(models.Manager):
         away_ranking_score = self.annotate(
             away_ranking_score=models.Avg("away_team__score")
         ).filter(pk=models.OuterRef("pk"))
+        is_home = (
+            None if player is None else
+            self.filter(
+                pk=models.OuterRef("pk"),
+                home_team=player,
+            ).annotate(
+                is_home=models.Count("home_team"),
+            )
+        )
+        is_away = (
+            None if player is None else
+            self.filter(
+                pk=models.OuterRef("pk"),
+                away_team=player,
+            ).annotate(
+                is_away=models.Count("away_team"),
+            )
+        )
         # datetime_finished = self.filter(
         #     pk=models.OuterRef("pk"),
         # ).annotate(
         #     datetime_finished=models.Max("period__datetime"),
         # )
-        return self.annotate(
+        matches = (
+            self if player is None else
+            self.filter(models.Q(home_team=player) | models.Q(away_team=player)).annotate(
+                is_home=models.Subquery(
+                    is_home.values("is_home"),
+                    output_field=models.PositiveIntegerField(),
+                ),
+                is_away=models.Subquery(
+                    is_away.values("is_away"),
+                    output_field=models.PositiveIntegerField(),
+                ),
+            )
+        )
+        return matches.annotate(
             period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
             total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
             total_away_points=models.Subquery(total_away_points.values("total_away_points"), output_field=models.PositiveIntegerField()),

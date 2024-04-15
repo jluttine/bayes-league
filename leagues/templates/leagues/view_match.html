@@ -52,7 +52,7 @@
       {% endif %}
       {% endif %}
       {% include "leagues/match_stat_row.html" with label="Ranking score" xy=match.ranking_scores floatformat=1 %}
-      {% include "leagues/match_stat_row.html" with label="Expected points" xy=match.expected_points floatformat=0 %}
+      {% include "leagues/match_stat_row.html" with label="Expected points" xy=match.expected_points floatformat=1 %}
       {% include "leagues/match_stat_row.html" with label="Point win probability" xy=match.expected_point_win_percentages floatformat=1 suffix="&nbsp;%" %}
       {% with sp=match.points_to_win_actual|stringformat:"s" %}
       {% include "leagues/match_stat_row.html" with label="Period ("|add:sp|add:" p) win probability" xy=match.period_win_probabilities floatformat=1 suffix="&nbsp;%" %}

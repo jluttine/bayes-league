@@ -119,8 +119,8 @@ def scores_to_p_and_q(x, y):
 
 def score_to_result(x, y, n):
     return (
-        (n, np.floor(n * score_to_p(y - x))) if x >= y else
-        (np.floor(n * score_to_p(x - y)), n)
+        (n, n * score_to_p(y - x)) if x >= y else
+        (n * score_to_p(x - y), n)
     )
 
 

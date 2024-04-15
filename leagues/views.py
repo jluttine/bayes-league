@@ -229,6 +229,7 @@ def view_player(request, league_slug, player_uuid):
             league=player.league,
             player=player,
             matches=models.Match.objects.with_total_points(player=player),
+            ranking_stats=models.RankingScore.objects.with_ranking_stats(player),
         )
     )
 

@@ -164,6 +164,27 @@ class Player(models.Model):
             ),
         ]
 
+    def current_ranking_stats(self):
+        if self.score is None:
+            return None
+        ps = self.league.player_set.exclude(
+            score__isnull=True,
+        )
+        count_above = ps.filter(score__gt=self.score).count()
+        count_below = ps.filter(score__lt=self.score).count()
+        aggs = ps.aggregate(
+            count_total=models.Count("id"),
+            score_minimum=models.Min("score"),
+            score_maximum=models.Max("score"),
+        )
+        return dict(
+            count_above=count_above,
+            count_below=count_below,
+            position=1+count_above,
+            relative_position=100*(1-count_above/(aggs["count_total"]-1)),
+            **aggs,
+        )
+
     def __str__(self):
         return f"{self.uuid} - {self.name}"
 
@@ -503,7 +524,63 @@ class Period(models.Model):
         return (self.home_points, self.away_points)
 
 
+class RankingScoreManager(models.Manager):
+
+    def with_ranking_stats(self, player):
+
+        count_below = Stage.objects.filter(
+            pk=models.OuterRef("stage__pk"),
+        ).annotate(
+            count_below=models.Count(
+                "rankingscore",
+                filter=models.Q(
+                    rankingscore__score__lt=models.OuterRef("score"),
+                )
+            )
+        ).values("count_below")
+
+        count_above = Stage.objects.filter(
+            pk=models.OuterRef("stage__pk"),
+        ).annotate(
+            count_above=models.Count(
+                "rankingscore",
+                filter=models.Q(
+                    rankingscore__score__gt=models.OuterRef("score"),
+                )
+            )
+        ).values("count_above")
+
+        count_total = Stage.objects.filter(
+            pk=models.OuterRef("stage__pk"),
+        ).annotate(
+            count_total=models.Count(
+                "rankingscore",
+                filter=models.Q(
+                    rankingscore__score__isnull=False,
+                )
+            )
+        ).values("count_total")
+
+        return (
+            self
+            .filter(
+                # Include only stages that contain some matches
+                stage__match__isnull=False,
+                # Interested only in this player
+                player=player,
+                # .. and only if it has a ranking in the stage
+                score__isnull=False,
+            )
+            .distinct()
+            .annotate(
+                count_below=models.Subquery(count_below),
+                count_above=models.Subquery(count_above),
+                count_total=models.Subquery(count_total),
+            )
+        )
+
 class RankingScore(models.Model):
+    objects = RankingScoreManager()
     stage = models.ForeignKey(Stage, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     score = models.FloatField(blank=True, null=True, default=None)
@@ -516,3 +593,11 @@ class RankingScore(models.Model):
                 name="unique_players_in_ranking",
             ),
         ]
+
+    @property
+    def position(self):
+        return 1 + self.count_above
+
+    @property
+    def relative_position(self):
+        return 100 * (1 - self.count_above / (self.count_total-1))

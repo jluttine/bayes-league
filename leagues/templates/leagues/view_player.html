@@ -7,6 +7,63 @@
   {% endif %}
 </h1>
 
+{% if player.score is not None %}
+<h2>Ranking history</h2>
+<div class="table-container">
+  <table class="table is-striped">
+    <thead>
+      <tr>
+        <td>
+        </td>
+        <td>
+          <b>Position</b>
+        </td>
+        <td>
+          <b>Relative position</b>
+        </td>
+        <td>
+          <b>Score</b>
+        </td>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <b>Overall</b>
+        </td>
+        {% with r=player.current_ranking_stats %}
+        <td>
+          <b>{{ r.position }} / {{ r.count_total }}</b>
+        </td>
+        <td>
+          <b>{{ r.relative_position|floatformat:0 }} %</b>
+        </td>
+        <td>
+          <b>{{ player.score|floatformat:1 }}</b>
+        </td>
+        {% endwith %}
+      </tr>
+      {% for rs in ranking_stats %}
+      <tr>
+        <td>
+          <a href="{% url 'view_stage' rs.stage.league.slug rs.stage.slug %}">{{ rs.stage.name }}</a>
+        </td>
+        <td>
+          {{ rs.position }} / {{ rs.count_total }}
+        </td>
+        <td>
+          {{ rs.relative_position|floatformat:0 }} %
+        </td>
+        <td>
+          {{ rs.score|floatformat:1 }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
 <h2>Matches</h2>
 {% include 'leagues/table_matches_grouped.html' with selected_player=player %}
 

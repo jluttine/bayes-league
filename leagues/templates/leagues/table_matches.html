@@ -67,6 +67,7 @@
         </td>
         <td class="has-text-right">
           <a href="{% url 'view_match' league.slug match.uuid %}">
+            {% if match.has_result %}
             {% with p=match.performance %}
             {% if match.is_home %}
             {% include "leagues/stars.html" with notify=0 stars=p.1.0 sad=p.1.1 %}
@@ -80,6 +81,7 @@
             &nbsp;
             {% endif %}
             {% endwith %}
+            {% endif %}
             <span class="icon material-symbols-outlined">
             query_stats
             </span>

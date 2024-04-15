@@ -45,8 +45,10 @@
         </td>
         <td>
           {% if match.period_count > 0 %}
+          {% if match.period_count == 1 %}
           <b>{{ match.total_home_points }} - {{ match.total_away_points }}</b>
-          {% if match.period_count > 1 %}
+          {% else %}
+          <b>{{ match.home_periods }} - {{ match.away_periods }}</b>
           ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
           {% endif %}
           {% elif not league.write_protected or league.slug in logins %}

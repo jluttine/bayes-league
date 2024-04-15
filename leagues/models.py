@@ -577,7 +577,6 @@ class RankingScoreManager(models.Manager):
                 count_above=models.Subquery(count_above),
                 count_total=models.Subquery(count_total),
             )
-            .order_by("stage")
         )
 
 class RankingScore(models.Model):
@@ -587,7 +586,7 @@ class RankingScore(models.Model):
     score = models.FloatField(blank=True, null=True, default=None)
 
     class Meta:
-        ordering = ["-score", "player__name", "stage"]
+        ordering = ["stage", "-score", "player__name"]
         constraints = [
             models.UniqueConstraint(
                 fields=["stage", "player"],

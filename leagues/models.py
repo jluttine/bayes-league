@@ -577,6 +577,7 @@ class RankingScoreManager(models.Manager):
                 count_above=models.Subquery(count_above),
                 count_total=models.Subquery(count_total),
             )
+            .order_by("stage")
         )
 
 class RankingScore(models.Model):

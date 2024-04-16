@@ -18,7 +18,7 @@ def create_key():
 
 
 class League(models.Model):
-    slug = models.SlugField(max_length=30, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
     title = models.CharField(max_length=100)
     bonus = models.PositiveIntegerField(default=0)
     points_to_win = models.PositiveIntegerField(default=21)

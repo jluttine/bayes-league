@@ -8,11 +8,11 @@
   {% endif %}
 </h1>
 
-<h2>Ranking</h2>
+{% include 'leagues/ranking_title.html' %}
 
 {% include 'leagues/table_ranking.html' with rows=stage.rankingscore_set.all %}
 
-<h2>Matches</h2>
+{% include 'leagues/matches_title.html' %}
 
 {% include 'leagues/table_matches_grouped.html' %}
 {% endblock %}

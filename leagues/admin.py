@@ -11,32 +11,21 @@ class LeagueAdmin(admin.ModelAdmin):
 
     @admin.display(description="Public link")
     def public_link(self, instance):
+        if instance.pk is None:
+            return mark_safe("<i>(not created yet)</i>")
         url = reverse("view_league", args=[instance.slug])
         return mark_safe(f'<a href="{url}">{url}</a>')
-        return format_html_join(
-            mark_safe("<br>"),
-            "{}",
-            ((line,) for line in instance.get_full_address()),
-        ) or mark_safe("<span class='errors'>I can't determine this address.</span>")
 
     @admin.display(description="Admin link")
     def admin_link(self, instance):
+        if instance.pk is None:
+            return mark_safe("<i>(not created yet)</i>")
         url = reverse("login", args=[instance.slug, instance.write_key])
         return (
             mark_safe(f'<a href="{url}">{url}</a>')
             if instance.write_protected else
             mark_safe("<i>(not write-protected)</i>")
         )
-        return "JOHNDOE"
-        return format_html_join("JOHNDOE")
-        # assuming get_full_address() returns a list of strings
-        # for each line of the address and you want to separate each
-        # line by a linebreak
-        return format_html_join(
-            mark_safe("<br>"),
-            "{}",
-            ((line,) for line in instance.get_full_address()),
-        ) or mark_safe("<span class='errors'>I can't determine this address.</span>")
 
 
 class PeriodAdminInline(admin.TabularInline):

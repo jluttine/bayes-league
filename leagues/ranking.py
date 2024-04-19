@@ -10,19 +10,7 @@ from scipy.stats import binom
 # on all machines
 import autograd.numpy as np
 from autograd.scipy.special import gammaln, logsumexp
-from autograd import grad
-
-
-def team_scores(x, jss):
-    return np.array([
-        # Geometric mean, that is, arithmetic mean on logarithmic scale
-        np.mean(x[js])
-        # Product, that is, sum on logarithmic scale. Geometric mean is better.
-        #np.sum(x[js])
-        # Adding
-        #logsumexp(x[js])
-        for js in jss
-    ])
+from autograd import value_and_grad
 
 
 def calculate_ranking(X, n_players, regularisation):
@@ -48,9 +36,18 @@ def calculate_ranking(X, n_players, regularisation):
     jss_home = [np.array(xi[0], dtype=int) for xi in X]
     jss_away = [np.array(xi[1], dtype=int) for xi in X]
 
+    # Form matrices that calculate the average of the relevant ranking scores
+    # when used as np.dot(A,ranking_scores)
+    n_matches = len(X)
+    A_home = np.zeros((n_matches, n_players))
+    A_away = np.zeros((n_matches, n_players))
+    for i in range(n_matches):
+        A_home[i,X[i][0]] = 1 / len(X[i][0])
+        A_away[i,X[i][1]] = 1 / len(X[i][1])
+
     def negloglikelihood(x):
-        home_x = team_scores(x, jss_home)
-        away_x = team_scores(x, jss_away)
+        home_x = np.dot(A_home, x)
+        away_x = np.dot(A_away, x)
         logz = np.logaddexp(home_x, away_x)
         logp = home_x - logz
         logq = away_x - logz
@@ -71,9 +68,9 @@ def calculate_ranking(X, n_players, regularisation):
     logging.info("Calculating rankings..")
     t0 = time.monotonic()
     res = minimize(
-        negloglikelihood,
+        value_and_grad(negloglikelihood),
         x0=np.zeros(n_players),
-        jac=grad(negloglikelihood),
+        jac=True,
         method="BFGS",  # default anyway
         options=dict(
             xrtol=1e-3,

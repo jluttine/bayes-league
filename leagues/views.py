@@ -1,4 +1,6 @@
 import functools
+import logging
+import time
 from argparse import Namespace
 import re
 import numpy as np
@@ -679,10 +681,13 @@ def create_even_matches(players):
     # when there are multiple possibilities with the same minimum for criterion
     # one.
 
+    start_time = time.monotonic()
+
     def find_optimal_pairings(ps, best_cost, current_cost):
 
         # Can't pair one or less teams, so stop here
         if len(ps) < 2:
+            logging.info(f"Leaf node: {best_cost}, {current_cost}")
             return ([], current_cost)
 
         if len(ps) % 2 != 0:
@@ -750,6 +755,11 @@ def create_even_matches(players):
             ]
         )
         for j in range(1, len(ps)):
+            if best_cost < (np.inf, np.inf) and time.monotonic() - start_time > 3:
+                logging.warning(
+                    "Match pairing taking over 3s, stopping and using current solution"
+                )
+                break
             p1 = ps[prefs[j]]
             # Current cost at this depth
             current_cost_new = (
@@ -780,11 +790,13 @@ def create_even_matches(players):
 
         return retval
 
+    logging.info("Starting match pairing optimization")
     (matches, _) = find_optimal_pairings(
         remaining_players,
         (np.inf, np.inf),
         (0, 0),
     )
+    logging.info("Match pairing optimization ended")
 
     # Convert the list indices to player objects
     return [

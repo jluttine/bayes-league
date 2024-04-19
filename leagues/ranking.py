@@ -74,6 +74,10 @@ def calculate_ranking(X, n_players, regularisation):
         negloglikelihood,
         x0=np.zeros(n_players),
         jac=grad(negloglikelihood),
+        method="BFGS",  # default anyway
+        options=dict(
+            xrtol=1e-3,
+        ),
     )
     t = time.monotonic() - t0
     logging.info(f"Ranking calculations completed in {t} seconds, nfev={res.nfev}: {res.message}")

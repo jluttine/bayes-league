@@ -72,6 +72,12 @@ def calculate_ranking(X, n_players, regularisation):
         x0=np.zeros(n_players),
         jac=True,
         method="BFGS",  # default anyway
+        options=dict(
+            # The optimization becomes surprisingly slow. Have some safety value
+            # here so that it won't take way too much time. But perhaps the
+            # optimization should be optimized...
+            maxiter=50,
+        )
     )
     t = time.monotonic() - t0
     logging.info(f"Ranking calculations completed in {t} seconds, nfev={res.nfev}: {res.message}")

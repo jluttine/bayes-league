@@ -508,13 +508,17 @@ def view_stage(request, league_slug, stage_slug):
     )
 
 
-def create_match(request, league_slug):
+def create_match(request, league_slug, stage_slug=None):
     league = get_object_or_404(models.League, slug=league_slug)
+    stage = (
+        None if stage_slug is None else
+        get_object_or_404(models.Stage, league=league, slug=stage_slug)
+    )
 
     if league.write_protected and league_slug not in request.session.get("logins", []):
         raise PermissionDenied()
 
-    match = models.Match(league=league)
+    match = models.Match(league=league, stage=stage)
     return model_form_view(
         request,
         forms.MatchForm,

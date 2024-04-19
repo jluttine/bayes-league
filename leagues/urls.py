@@ -70,6 +70,11 @@ urlpatterns = [
         name="create_match",
     ),
     path(
+        "league/<slug:league_slug>/stages/add_match/<slug:stage_slug>/",
+        views.create_match,
+        name="create_match",
+    ),
+    path(
         "league/<slug:league_slug>/matches/bulk/",
         views.create_multiple_matches,
         name="create_multiple_matches",

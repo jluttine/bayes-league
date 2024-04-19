@@ -76,7 +76,7 @@ def calculate_ranking(X, n_players, regularisation):
         jac=grad(negloglikelihood),
     )
     t = time.monotonic() - t0
-    logging.info(f"Ranking calculations completed in {t} seconds")
+    logging.info(f"Ranking calculations completed in {t} seconds, nfev={res.nfev}: {res.message}")
 
     # Logarithmic scale scores
     scores = list(10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2))

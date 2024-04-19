@@ -1,4 +1,6 @@
 import functools
+import time
+import logging
 
 import numpy
 from scipy.optimize import minimize
@@ -66,11 +68,15 @@ def calculate_ranking(X, n_players, regularisation):
             -np.sum(regularisation*logp_reg + regularisation*logq_reg)
         )
 
+    logging.info("Calculating rankings..")
+    t0 = time.monotonic()
     res = minimize(
         negloglikelihood,
         x0=np.zeros(n_players),
         jac=grad(negloglikelihood),
     )
+    t = time.monotonic() - t0
+    logging.info(f"Ranking calculations completed in {t} seconds")
 
     # Logarithmic scale scores
     scores = list(10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2))

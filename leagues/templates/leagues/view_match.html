@@ -51,6 +51,8 @@
       {% include "leagues/match_stat_row.html" with label="Bonus points" xy=match.bonus_points floatformat=0 %}
       {% endif %}
       {% endif %}
+      {% with rs=match.ranking_scores %}
+      {% if rs.0 is not None and rs.1 is not None %}
       {% include "leagues/match_stat_row.html" with label="Ranking score" xy=match.ranking_scores floatformat=1 %}
       {% include "leagues/match_stat_row.html" with label="Expected points" xy=match.expected_points floatformat=1 %}
       {% include "leagues/match_stat_row.html" with label="Point win probability" xy=match.expected_point_win_percentages floatformat=1 suffix="&nbsp;%" %}
@@ -62,6 +64,8 @@
       {% include "leagues/match_stat_row.html" with label="Performance" xy=p.0 floatformat=1 suffix="&nbsp;%&nbsp;" stars=p.1 %}
       {% endwith %}
       {% endif %}
+      {% endif %}
+      {% endwith %}
     </tbody>
   </table>
 </div>

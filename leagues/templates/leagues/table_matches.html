@@ -51,7 +51,7 @@
           <b>{{ match.home_periods }} - {{ match.away_periods }}</b>
           ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
           {% endif %}
-          {% elif not league.write_protected or league.slug in logins %}
+          {% else %}
           <a class="button is-primary" href="{% url 'start_match' league.slug match.uuid %}">
             Start
           </a>

@@ -906,6 +906,7 @@ def view_match(request, league_slug, match_uuid):
 
 
 def start_match(request, league_slug, match_uuid):
+    # NOTE: We allow all users to mark matches as started
     league = get_object_or_404(models.League, slug=league_slug)
     match = get_object_or_404(
         models.Match.objects.with_total_points(),

@@ -43,6 +43,10 @@
             {% endif %}
             {% endfor %}
 
+            <a class="navbar-item" href="{% url 'view_stats' league.slug %}">
+              Stats
+            </a>
+
             {% if not league.write_protected or league.slug in logins %}
             <a class="navbar-item" href="{% url 'edit_league' league.slug %}">
               Settings

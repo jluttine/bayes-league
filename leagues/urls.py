@@ -25,6 +25,11 @@ urlpatterns = [
         name="edit_league",
     ),
     path(
+        "league/<slug:league_slug>/stats/",
+        views.view_stats,
+        name="view_stats",
+    ),
+    path(
         "league/<slug:league_slug>/players/view/<uuid:player_uuid>/",
         views.view_player,
         name="view_player",

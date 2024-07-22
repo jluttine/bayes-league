@@ -222,6 +222,19 @@ def edit_league(request, league_slug):
     )
 
 
+def view_stats(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    return render(
+        request,
+        "leagues/view_stats.html",
+        dict(
+            league=league,
+            matches=league.match_set.with_total_points(),
+            players=league.player_set.with_stats().order_by("-score", "name"),
+        )
+    )
+
+
 def view_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
     return render(

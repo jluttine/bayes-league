@@ -128,7 +128,42 @@ class Stage(OrderedModel):
         return self.name
 
 
+class PlayerManager(models.Manager):
+
+    def with_stats(self):
+        points_won = self.annotate(
+            points_won=(
+                models.Sum("away_match_set__period__away_points", distinct=True, default=0)
+                + models.Sum("home_match_set__period__home_points", distinct=True, default=0)
+            ),
+        ).filter(pk=models.OuterRef("pk"))
+        points_lost = self.annotate(
+            points_lost=(
+                models.Sum("away_match_set__period__home_points", distinct=True, default=0)
+                + models.Sum("home_match_set__period__away_points", distinct=True, default=0)
+            ),
+        ).filter(pk=models.OuterRef("pk"))
+        points_played = self.annotate(
+            points_played=(
+                models.Sum("home_match_set__period__home_points", distinct=True, default=0)
+                + models.Sum("home_match_set__period__away_points", distinct=True, default=0)
+                + models.Sum("away_match_set__period__home_points", distinct=True, default=0)
+                + models.Sum("away_match_set__period__away_points", distinct=True, default=0)
+            ),
+        ).filter(pk=models.OuterRef("pk"))
+        return self.annotate(
+            points_played=models.Subquery(points_played.values("points_played"), output_field=models.PositiveIntegerField()),
+            points_won=models.Subquery(points_won.values("points_won"), output_field=models.PositiveIntegerField()),
+            points_lost=models.Subquery(points_lost.values("points_lost"), output_field=models.PositiveIntegerField()),
+        ).annotate(
+            point_win_percentage=100 * models.F("points_won") / models.F("points_played")
+        )
+
+
 class Player(models.Model):
+
+    objects = PlayerManager()
+
     league = models.ForeignKey(
         League,
         on_delete=models.CASCADE,
@@ -189,6 +224,37 @@ class Player(models.Model):
         return f"{self.uuid} - {self.name}"
 
 
+def annotate_matches_with_periods(matches):
+    home_periods = matches.filter(
+        pk=models.OuterRef("pk"),
+        period__home_points__gt=models.F("period__away_points"),
+    ).annotate(
+        home_periods=models.Count("period", distinct=True),
+    )
+    away_periods = matches.filter(
+        pk=models.OuterRef("pk"),
+        period__away_points__gt=models.F("period__home_points"),
+    ).annotate(
+        away_periods=models.Count("period", distinct=True),
+    )
+    return matches.annotate(
+        home_periods=models.functions.Coalesce(
+            models.Subquery(
+                home_periods.values("home_periods"),
+                output_field=models.PositiveIntegerField(),
+            ),
+            0,
+        ),
+        away_periods=models.functions.Coalesce(
+            models.Subquery(
+                away_periods.values("away_periods"),
+                output_field=models.PositiveIntegerField(),
+            ),
+            0,
+        ),
+    )
+
+
 class MatchManager(models.Manager):
 
     def with_players(self, players):
@@ -211,6 +277,9 @@ class MatchManager(models.Manager):
             models.Q(home_team__in=players) & models.Q(away_team__in=players)
         ).distinct()
 
+    def with_periods(self):
+        return annotate_matches_with_periods(self)
+
     def with_total_points(self, player=None):
         # NOTE: Multiple annotations yield wrong results. So, we need to use a
         # bit more complex solution with subqueries. See:
@@ -225,18 +294,6 @@ class MatchManager(models.Manager):
         total_away_points = self.annotate(
             total_away_points=models.Sum("period__away_points")
         ).filter(pk=models.OuterRef("pk"))
-        home_periods = self.filter(
-            pk=models.OuterRef("pk"),
-            period__home_points__gt=models.F("period__away_points"),
-        ).annotate(
-            home_periods=models.Count("period", distinct=True),
-        )
-        away_periods = self.filter(
-            pk=models.OuterRef("pk"),
-            period__away_points__gt=models.F("period__home_points"),
-        ).annotate(
-            away_periods=models.Count("period", distinct=True),
-        )
         home_ranking_score = self.annotate(
             home_ranking_score=models.Avg("home_team__score")
         ).filter(pk=models.OuterRef("pk"))
@@ -279,7 +336,7 @@ class MatchManager(models.Manager):
                 ),
             )
         )
-        return matches.annotate(
+        return annotate_matches_with_periods(matches).annotate(
             period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
             total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
             total_away_points=models.Subquery(total_away_points.values("total_away_points"), output_field=models.PositiveIntegerField()),
@@ -290,20 +347,6 @@ class MatchManager(models.Manager):
             points_to_win=models.Case(
                 models.When(stage__points_to_win=None, then=models.F("league__points_to_win")),
                 default=models.F("stage__points_to_win"),
-            ),
-            home_periods=models.functions.Coalesce(
-                models.Subquery(
-                    home_periods.values("home_periods"),
-                    output_field=models.PositiveIntegerField(),
-                ),
-                0,
-            ),
-            away_periods=models.functions.Coalesce(
-                models.Subquery(
-                    away_periods.values("away_periods"),
-                    output_field=models.PositiveIntegerField(),
-                ),
-                0,
             ),
             home_ranking_score=models.Subquery(
                 home_ranking_score.values("home_ranking_score"),

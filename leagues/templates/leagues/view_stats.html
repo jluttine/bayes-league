@@ -1,0 +1,34 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+
+<h1>{{ league.title }} stats</h1>
+
+<div class="table-container">
+  <table class="table is-striped">
+    <thead>
+      <tr>
+        <th>Player</th>
+        <th>Score</th>
+        <th>Points played</th>
+        <th>Points won</th>
+        <th>Points lost</th>
+        <th>%</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for player in players %}
+      <tr>
+        <td><a href="{% url 'view_player' league.slug player.uuid %}">{{ player.name }}</a></td>
+        <td>{% if player.score is None %}-{% else %}{{ player.score|floatformat:1 }}{% endif %}</td>
+        <td>{{ player.points_played }}</td>
+        <td>{{ player.points_won }}</td>
+        <td>{{ player.points_lost }}</td>
+        <td>{{ player.point_win_percentage|floatformat:1 }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endblock %}

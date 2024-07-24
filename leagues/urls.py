@@ -25,6 +25,16 @@ urlpatterns = [
         name="edit_league",
     ),
     path(
+        "league/<slug:league_slug>/dashboard/",
+        views.view_dashboard,
+        name="view_dashboard",
+    ),
+    path(
+        "league/<slug:league_slug>/dashboard/content/",
+        views.get_dashboard_content,
+        name="dashboard_content",
+    ),
+    path(
         "league/<slug:league_slug>/stats/",
         views.view_stats,
         name="view_stats",

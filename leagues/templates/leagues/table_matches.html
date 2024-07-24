@@ -2,22 +2,32 @@
   <table class="table is-striped">
     <thead>
       <tr>
-        <th>Time</th>
+        {% if show_counter %}<th></th>{% endif %}
+        {% if not hide_time %}<th>Time</th>{% endif %}
         <th>Home team</th>
         <th></th>
         <th>Away team</th>
+        {% if not hide_result %}
         <th>Result</th>
         <th>Bonus</th>
-        <th></th>
+        {% endif %}
+        {% if not hide_info %}<th></th>{% endif %}
       </tr>
     </thead>
     <tbody>
 
       {% for match in matches %}
       <tr>
+        {% if show_counter %}
+        <td>
+          {{ forloop.revcounter }}.
+        </td>
+        {% endif %}
+        {% if not hide_time %}
         <td>
           {{ match.datetime_started|date:'Y-m-d H:i' }}
         </td>
+        {% endif %}
         <td>
           {% for player in match.home_team.all %}
           <a href="{% url 'view_player' league.slug player.uuid %}">
@@ -43,6 +53,7 @@
           </a><br />
           {% endfor %}
         </td>
+        {% if not hide_result %}
         <td>
           {% if match.period_count > 0 %}
           {% if match.period_count == 1 %}
@@ -67,6 +78,8 @@
           {% endif %}
           {% endif %}
         </td>
+        {% endif %}
+        {% if not hide_info %}
         <td class="has-text-right">
           <a href="{% url 'view_match' league.slug match.uuid %}">
             {% if match.has_result %}
@@ -97,6 +110,7 @@
           </a>
           {% endif %}
         </td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>

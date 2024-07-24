@@ -1,0 +1,25 @@
+{% extends "leagues/base.html" %}
+{% load static %}
+
+{% block head %}
+<script type="text/javascript" src="{% static 'fullscreen-dashboard.js' %}"></script>
+<script type="text/javascript" src="{% static 'fetch-html-as-text.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<h1>{{ league.title }} dashboard <a href="#" onclick="openFullscreen();" class="button is-primary">Enter fullscreen</a> </h1>
+
+<div class="has-background-white" id="dashboard">
+  {% include 'leagues/dashboard_content.html' %}
+</div>
+
+<script>
+async function refreshDashboard() {
+    const dashboardDiv = document.getElementById("dashboard");
+  dashboardDiv.innerHTML = await fetchHtmlAsText("{% url 'dashboard_content' league.slug %}");
+}
+setInterval(refreshDashboard, 5000)
+</script>
+
+{% endblock %}

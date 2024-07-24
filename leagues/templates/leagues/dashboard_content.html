@@ -1,0 +1,14 @@
+<div class="columns">
+  <div class="column">
+    <h2>Ranking</h2>
+    {% include 'leagues/table_ranking.html' with rows=ranking %}
+  </div>
+  <div class="column">
+    <h2>Next up</h2>
+    {% include 'leagues/table_matches.html' with matches=next_matches hide_time=True hide_result=True hide_info=True show_counter=True %}
+    <h2>Ongoing</h2>
+    {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_result=True hide_info=True %}
+    <h2>Latest</h2>
+    {% include 'leagues/table_matches.html' with matches=latest_matches hide_info=True %}
+  </div>
+</div>

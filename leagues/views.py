@@ -222,6 +222,46 @@ def edit_league(request, league_slug):
     )
 
 
+def view_dashboard(request, league_slug, template="leagues/view_dashboard.html"):
+    league = get_object_or_404(models.League, slug=league_slug)
+    return render(
+        request,
+        template,
+        dict(
+            league=league,
+            next_matches=reversed(league.match_set.with_total_points().filter(
+                period_count=0,
+            ).reverse()[:5]),
+            ongoing_matches=league.match_set.with_total_points().filter(
+                period_count__gt=0,
+                total_home_points=0,
+                total_away_points=0,
+            ),
+            latest_matches=league.match_set.with_total_points().filter(
+                Q(period_count__gt=0) & (
+                    Q(total_home_points__gt=0) |
+                    Q(total_away_points__gt=0)
+                ),
+            )[:5],
+            ranking=[
+                Namespace(
+                    player=p,
+                    score=p.score,
+                )
+                for p in league.player_set.all().order_by("-score", "name")
+            ],
+        )
+    )
+
+
+def get_dashboard_content(request, league_slug):
+    return view_dashboard(
+        request,
+        league_slug,
+        template="leagues/dashboard_content.html",
+    )
+
+
 def view_stats(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     return render(

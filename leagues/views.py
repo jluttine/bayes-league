@@ -233,17 +233,14 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
             next_matches=reversed(league.match_set.with_total_points().filter(
                 period_count=0,
                 datetime_started__isnull=True,
-            ).order_by("datetime")[:5]),
+            ).order_by("datetime")[:league.nextup_matches_count]),
             ongoing_matches=league.match_set.with_total_points().filter(
                 period_count=0,
                 datetime_started__isnull=False,
             ).order_by("-datetime_started"),
             latest_matches=league.match_set.with_total_points().filter(
-                Q(period_count__gt=0) & (
-                    Q(total_home_points__gt=0) |
-                    Q(total_away_points__gt=0)
-                ),
-            ).order_by("-datetime_last_period")[:5],
+                period_count__gt=0,
+            ).order_by("-datetime_last_period")[:league.latest_matches_count],
             ranking=[
                 Namespace(
                     player=p,

@@ -22,7 +22,14 @@ class LeagueForm(ModelForm):
 
     class Meta:
         model = models.League
-        fields = ["title", "bonus", "points_to_win", "regularisation"]
+        fields = [
+            "title",
+            "bonus",
+            "points_to_win",
+            "regularisation",
+            "nextup_matches_count",
+            "latest_matches_count",
+        ]
 
 
 class PlayerForm(ModelForm):

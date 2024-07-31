@@ -26,6 +26,8 @@ class League(models.Model):
         default=1,
         validators=[MinValueValidator(0)]
     )
+    nextup_matches_count = models.PositiveIntegerField(default=5)
+    latest_matches_count = models.PositiveIntegerField(default=5)
     write_protected = models.BooleanField(default=False)
     write_key = models.CharField(
         null=True,

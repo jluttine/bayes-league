@@ -27,6 +27,8 @@
         <td>
           {% if match.period_count == 0 %}
           {{ match.datetime_started|date:'Y-m-d H:i' }}
+          {% elif use_datetime_last_period %}
+          {{ match.datetime_last_period|date:'Y-m-d H:i' }}
           {% else %}
           {{ match.datetime_first_period|date:'Y-m-d H:i' }}
           {% endif %}

@@ -362,13 +362,13 @@ class MatchManager(models.Manager):
             #     datetime_finished.values("datetime_finished"),
             #     output_field=models.DateTimeField(null=True),
             # ),
-            datetime_finished=models.Max("period__datetime"),
-            datetime_started=models.Min("period__datetime"),
+            datetime_last_period=models.Max("period__datetime"),
+            datetime_first_period=models.Min("period__datetime"),
             max_home_points=models.Max("period__home_points"),
             max_away_points=models.Max("period__away_points"),
         ).distinct().order_by(
             "stage",
-            models.F("datetime_finished").desc(nulls_first=True),
+            models.F("datetime_first_period").desc(nulls_first=True),
             "-pk",
         )  # Meta.ordering not obeyed, so sort explicitly
 

@@ -231,7 +231,7 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
             league=league,
             next_matches=reversed(league.match_set.with_total_points().filter(
                 period_count=0,
-            ).reverse()[:5]),
+            ).order_by("datetime")[:5]),
             ongoing_matches=league.match_set.with_total_points().filter(
                 period_count__gt=0,
                 total_home_points=0,
@@ -242,7 +242,7 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
                     Q(total_home_points__gt=0) |
                     Q(total_away_points__gt=0)
                 ),
-            )[:5],
+            ).order_by("-datetime_last_period")[:5],
             ranking=[
                 Namespace(
                     player=p,

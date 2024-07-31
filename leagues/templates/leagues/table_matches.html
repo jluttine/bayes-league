@@ -25,7 +25,11 @@
         {% endif %}
         {% if not hide_time %}
         <td>
+          {% if match.period_count == 0 %}
+          {{ match.datetime_started|date:'Y-m-d H:i' }}
+          {% else %}
           {{ match.datetime_first_period|date:'Y-m-d H:i' }}
+          {% endif %}
         </td>
         {% endif %}
         <td>
@@ -62,10 +66,12 @@
           <b>{{ match.home_periods }} - {{ match.away_periods }}</b>
           ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
           {% endif %}
-          {% else %}
+          {% elif match.datetime_started is None %}
           <a class="button is-primary" href="{% url 'start_match' league.slug match.uuid %}">
             Start
           </a>
+          {% else %}
+          rESulT
           {% endif %}
 
         </td>

@@ -369,6 +369,7 @@ class MatchManager(models.Manager):
         ).distinct().order_by(
             "stage",
             models.F("datetime_first_period").desc(nulls_first=True),
+            models.F("datetime_started").desc(nulls_first=True),
             "-pk",
         )  # Meta.ordering not obeyed, so sort explicitly
 
@@ -402,6 +403,13 @@ class Match(models.Model):
     datetime = models.DateTimeField(
         # NOTE: Don't use auto_now_add so the datetime can be edited
         default=timezone.now,
+    )
+    # Field used to mark a match has been started, so it's ongoing until it gets
+    # a result.
+    datetime_started = models.DateTimeField(
+        blank=True,
+        null=True,
+        default=None,
     )
     uuid = models.UUIDField(
         unique=True,

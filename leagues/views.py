@@ -13,6 +13,7 @@ from django.conf import settings
 from django.db.models import Q
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned
 from django.db import IntegrityError
+from django.db.models.functions import Now
 
 from . import models
 from . import forms
@@ -231,12 +232,12 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
             league=league,
             next_matches=reversed(league.match_set.with_total_points().filter(
                 period_count=0,
+                datetime_started__isnull=True,
             ).order_by("datetime")[:5]),
             ongoing_matches=league.match_set.with_total_points().filter(
-                period_count__gt=0,
-                total_home_points=0,
-                total_away_points=0,
-            ),
+                period_count=0,
+                datetime_started__isnull=False,
+            ).order_by("-datetime_started"),
             latest_matches=league.match_set.with_total_points().filter(
                 Q(period_count__gt=0) & (
                     Q(total_home_points__gt=0) |
@@ -960,30 +961,19 @@ def view_match(request, league_slug, match_uuid):
 
 def start_match(request, league_slug, match_uuid):
     # NOTE: We allow all users to mark matches as started
-    league = get_object_or_404(models.League, slug=league_slug)
-    match = get_object_or_404(
-        models.Match.objects.with_total_points(),
-        league=league,
+    models.Match.objects.filter(
+        league__slug=league_slug,
         uuid=match_uuid,
+        datetime_started=None,
+    ).update(
+        datetime_started=Now(),
     )
-    try:
-        # FIXME: This isn't atomic, so it's possible that simultaneous Start
-        # requests will create multiple periods..
-        models.Period.objects.get_or_create(
-            match=match,
-            defaults=dict(
-                home_points=0,
-                away_points=0,
-            ),
-        )
-    except MultipleObjectsReturned:
-        pass
 
     # Go back to where you came from
     return http.HttpResponseRedirect(
         request.META.get(
             'HTTP_REFERER',
-            reverse("view_match", args=[league.slug, match.uuid]),
+            reverse("view_match", args=[league_slug, match_uuid]),
         )
     )
 

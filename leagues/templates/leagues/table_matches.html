@@ -3,7 +3,7 @@
     <thead>
       <tr>
         {% if show_counter %}<th></th>{% endif %}
-        {% if not hide_time %}<th>Time</th>{% endif %}
+        {% if not hide_time %}<th>{{ datetime_title|default:"Time" }}</th>{% endif %}
         <th>Home team</th>
         <th></th>
         <th>Away team</th>

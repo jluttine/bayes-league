@@ -7,13 +7,11 @@
 {% if stage.grouper.bonus != 0 %}
 Bonus points: {{ stage.grouper.bonus }}
 {% else %}
-No bonus points
 {% endif %}
 {% else %}
 {% if league.bonus != 0 %}
 Bonus points: {{ league.bonus }} (league default)
 {% else %}
-No bonus points (league default)
 {% endif %}
 {% endif %}
 {% include 'leagues/table_matches.html' with matches=stage.list %}

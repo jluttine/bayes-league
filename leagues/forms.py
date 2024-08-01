@@ -60,11 +60,18 @@ class StageForm(ModelForm):
         )
 
 
+class ResultForm(ModelForm):
+
+    class Meta:
+        model = models.Match
+        fields = []
+
+
 class MatchForm(ModelForm):
 
     class Meta:
         model = models.Match
-        fields = ["stage", "home_team", "away_team"]
+        fields = ["stage", "datetime_started", "home_team", "away_team"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,0 +1,49 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Add result</h1>
+
+<form action="{% url 'add_result' match.league.slug match.uuid %}" method="post">
+    {% csrf_token %}
+    {{ form }}
+    {{ formset.management_form }}
+    <div class="table-container">
+        <table class="table is-striped">
+            <thead>
+                <tr>
+                    <th>
+                    </th>
+                    <th>
+                        {% for player in match.home_team.all %}
+                        {{ player.name }}
+                        {% endfor %}
+                    </th>
+                    <th>
+                        -
+                    </th>
+                    <th>
+                        {% for player in match.away_team.all %}
+                        {{ player.name }}
+                        {% endfor %}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for period_form in formset %}
+                <tr>
+                    <td>{{ forloop.counter }}. period {{ period_form.non_field_errors }} </td>
+                    <td>{{ period_form.home_points }} {{ period_form.home_points.errors }}</td>
+                    <td />
+                    <td>{{ period_form.away_points }} {{ period_form.away_points.errors }}</td>
+                    {{ period_form.id }}
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <a class="button is-primary is-light" href="{% url 'view_league' match.league.slug %}">
+            Cancel
+        </a>
+        <input class="button is-primary" type="submit" value="Save">
+    </div>
+</form>
+{% endblock %}

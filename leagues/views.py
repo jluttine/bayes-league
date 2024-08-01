@@ -975,6 +975,33 @@ def start_match(request, league_slug, match_uuid):
     )
 
 
+def add_result(request, league_slug, match_uuid):
+    league = get_object_or_404(models.League, slug=league_slug)
+    match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
+
+    return model_form_view(
+        request,
+        forms.ResultForm,
+        template="leagues/add_result.html",
+        redirect=lambda **_: update_ranking(
+            league,
+            match.stage,
+            redirect=reverse("view_match", args=[league_slug, match_uuid]),
+        ),
+        context=dict(
+            league=league,
+            match=match,
+        ),
+        instance=match,
+        InlineFormSet=inlineformset_factory(
+            models.Match,
+            models.Period,
+            fields=["home_points", "away_points"],
+            extra=3,
+        ),
+    )
+
+
 def edit_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     if league.write_protected and league_slug not in request.session.get("logins", []):

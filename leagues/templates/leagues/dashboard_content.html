@@ -9,6 +9,6 @@
     <h2>Ongoing</h2>
     {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_result=True hide_info=True datetime_title="Start time" %}
     <h2>Latest</h2>
-    {% include 'leagues/table_matches.html' with matches=latest_matches hide_info=True use_datetime_last_period=True datetime_title="End time" %}
+    {% include 'leagues/table_matches.html' with matches=latest_matches hide_info=True use_datetime_last_period=True datetime_title="End time" hide_bonus=True %}
   </div>
 </div>

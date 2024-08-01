@@ -9,7 +9,9 @@
         <th>Away team</th>
         {% if not hide_result %}
         <th>Result</th>
+        {% if not hide_bonus %}
         <th>Bonus</th>
+        {% endif %}
         {% endif %}
         {% if not hide_info %}<th></th>{% endif %}
       </tr>
@@ -30,7 +32,8 @@
           {% elif use_datetime_last_period %}
           {{ match.datetime_last_period|date:'Y-m-d H:i' }}
           {% else %}
-          {{ match.datetime_first_period|date:'Y-m-d H:i' }}
+          {# NOTE: Let's use last period everywhere.. #}
+          {{ match.datetime_last_period|date:'Y-m-d H:i' }}
           {% endif %}
         </td>
         {% endif %}
@@ -73,10 +76,13 @@
             Start
           </a>
           {% else %}
-          rESulT
+          <a class="button is-primary" href="{% url 'add_result' league.slug match.uuid %}">
+            Add result
+          </a>
           {% endif %}
 
         </td>
+        {% if not hide_bonus %}
         <td>
           {% if match.period_count > 0 %}
           {% if match.bonus != 0 %}
@@ -86,6 +92,7 @@
           {% endif %}
           {% endif %}
         </td>
+        {% endif %}
         {% endif %}
         {% if not hide_info %}
         <td class="has-text-right">

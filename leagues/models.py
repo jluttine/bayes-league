@@ -141,22 +141,22 @@ class PlayerManager(models.Manager):
     def with_stats(self):
         points_won = self.annotate(
             points_won=(
-                models.Sum("away_match_set__period__away_points", distinct=True, default=0)
-                + models.Sum("home_match_set__period__home_points", distinct=True, default=0)
+                models.Sum("away_match_set__period__away_points", distinct=False, default=0)
+                + models.Sum("home_match_set__period__home_points", distinct=False, default=0)
             ),
         ).filter(pk=models.OuterRef("pk"))
         points_lost = self.annotate(
             points_lost=(
-                models.Sum("away_match_set__period__home_points", distinct=True, default=0)
-                + models.Sum("home_match_set__period__away_points", distinct=True, default=0)
+                models.Sum("away_match_set__period__home_points", distinct=False, default=0)
+                + models.Sum("home_match_set__period__away_points", distinct=False, default=0)
             ),
         ).filter(pk=models.OuterRef("pk"))
         points_played = self.annotate(
             points_played=(
-                models.Sum("home_match_set__period__home_points", distinct=True, default=0)
-                + models.Sum("home_match_set__period__away_points", distinct=True, default=0)
-                + models.Sum("away_match_set__period__home_points", distinct=True, default=0)
-                + models.Sum("away_match_set__period__away_points", distinct=True, default=0)
+                models.Sum("home_match_set__period__home_points", distinct=False, default=0)
+                + models.Sum("home_match_set__period__away_points", distinct=False, default=0)
+                + models.Sum("away_match_set__period__home_points", distinct=False, default=0)
+                + models.Sum("away_match_set__period__away_points", distinct=False, default=0)
             ),
         ).filter(pk=models.OuterRef("pk"))
         return self.annotate(
@@ -164,7 +164,7 @@ class PlayerManager(models.Manager):
             points_won=models.Subquery(points_won.values("points_won"), output_field=models.PositiveIntegerField()),
             points_lost=models.Subquery(points_lost.values("points_lost"), output_field=models.PositiveIntegerField()),
         ).annotate(
-            point_win_percentage=100 * models.F("points_won") / models.F("points_played")
+            point_win_percentage=100.0 * models.F("points_won") / models.F("points_played")
         )
 
 

@@ -29,6 +29,7 @@ class LeagueForm(ModelForm):
             "regularisation",
             "nextup_matches_count",
             "latest_matches_count",
+            "dashboard_update_interval",
         ]
 
 

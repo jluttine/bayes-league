@@ -28,6 +28,12 @@ class League(models.Model):
     )
     nextup_matches_count = models.PositiveIntegerField(default=5)
     latest_matches_count = models.PositiveIntegerField(default=5)
+    dashboard_update_interval = models.PositiveIntegerField(
+        default=10,
+        validators=[
+            MinValueValidator(5),
+        ]
+    )
     write_protected = models.BooleanField(default=False)
     write_key = models.CharField(
         null=True,

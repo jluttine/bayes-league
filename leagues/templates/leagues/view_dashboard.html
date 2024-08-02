@@ -19,7 +19,7 @@ async function refreshDashboard() {
     const dashboardDiv = document.getElementById("dashboard");
   dashboardDiv.innerHTML = await fetchHtmlAsText("{% url 'dashboard_content' league.slug %}");
 }
-setInterval(refreshDashboard, 10000)
+  setInterval(refreshDashboard, {{ league.dashboard_update_interval }} * 1000)
 </script>
 
 {% endblock %}

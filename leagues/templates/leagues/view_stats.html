@@ -24,7 +24,7 @@
         <td>{{ player.points_played }}</td>
         <td>{{ player.points_won }}</td>
         <td>{{ player.points_lost }}</td>
-        <td>{{ player.point_win_percentage|floatformat:1 }}</td>
+        <td>{% if player.point_win_percentage is None %}-{% else %}{{ player.point_win_percentage|floatformat:1 }}{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

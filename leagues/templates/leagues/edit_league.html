@@ -1,7 +1,7 @@
 {% extends "leagues/base.html" %}
 
 {% block content %}
-<h1>Edit {{ league.title }}</h1>
+<h1>Settings</h1>
 
 <form action="{% url 'edit_league' league.slug %}" method="post">
   {% csrf_token %}

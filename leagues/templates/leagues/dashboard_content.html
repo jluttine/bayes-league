@@ -5,10 +5,22 @@
   </div>
   <div class="column">
     <h2>Next up</h2>
+    {% if next_matches %}
     {% include 'leagues/table_matches.html' with matches=next_matches hide_time=True hide_result=True hide_info=True show_counter=True %}
+    {% else %}
+    No upcoming matches
+    {% endif %}
     <h2>Ongoing</h2>
+    {% if ongoing_matches %}
     {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_result=True hide_info=True datetime_title="Start time" %}
+    {% else %}
+    No ongoing matches
+    {% endif %}
     <h2>Latest</h2>
+    {% if latest_matches %}
     {% include 'leagues/table_matches.html' with matches=latest_matches hide_info=True use_datetime_last_period=True datetime_title="End time" hide_bonus=True %}
+    {% else %}
+    No finished matches
+    {% endif %}
   </div>
 </div>

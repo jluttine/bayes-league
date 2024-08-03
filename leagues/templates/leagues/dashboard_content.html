@@ -14,13 +14,13 @@
     {% if ongoing_matches %}
     {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_result=True hide_info=True datetime_title="Start time" %}
     {% else %}
-    No ongoing matches
+    No matches at the moment
     {% endif %}
     <h2>Latest</h2>
     {% if latest_matches %}
     {% include 'leagues/table_matches.html' with matches=latest_matches hide_info=True use_datetime_last_period=True datetime_title="End time" hide_bonus=True %}
     {% else %}
-    No finished matches
+    No finished matches yet
     {% endif %}
   </div>
 </div>

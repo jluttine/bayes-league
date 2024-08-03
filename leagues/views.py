@@ -230,10 +230,10 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
         template,
         dict(
             league=league,
-            next_matches=reversed(league.match_set.with_total_points().filter(
+            next_matches=list(reversed(league.match_set.with_total_points().filter(
                 period_count=0,
                 datetime_started__isnull=True,
-            ).order_by("datetime")[:league.nextup_matches_count]),
+            ).order_by("datetime")[:league.nextup_matches_count])),
             ongoing_matches=league.match_set.with_total_points().filter(
                 period_count=0,
                 datetime_started__isnull=False,

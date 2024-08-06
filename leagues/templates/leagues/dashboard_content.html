@@ -6,13 +6,13 @@
   <div class="column">
     <h2>Next up</h2>
     {% if next_matches %}
-    {% include 'leagues/table_matches.html' with matches=next_matches hide_time=True hide_result=True hide_info=True show_counter=True %}
+    {% include 'leagues/table_matches.html' with matches=next_matches hide_time=True hide_bonus=True hide_info=True show_counter=True result_title=" " %}
     {% else %}
     No upcoming matches
     {% endif %}
     <h2>Ongoing</h2>
     {% if ongoing_matches %}
-    {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_result=True hide_info=True datetime_title="Start time" %}
+    {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_bonus=True hide_info=True datetime_title="Start time" result_title=" " %}
     {% else %}
     No matches at the moment
     {% endif %}

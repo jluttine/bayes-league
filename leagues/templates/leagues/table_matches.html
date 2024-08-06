@@ -8,7 +8,7 @@
         <th></th>
         <th>Away team</th>
         {% if not hide_result %}
-        <th>Result</th>
+        <th>{{ result_title|default:"Result" }}</th>
         {% if not hide_bonus %}
         <th>Bonus</th>
         {% endif %}

@@ -1206,6 +1206,7 @@ def choose_player_login(request, league_slug, key):
             league=league,
             user_player=user,
             can_administrate=can_administrate(league, user),
+            players=league.player_set.order_by("name")
         ),
     )
 

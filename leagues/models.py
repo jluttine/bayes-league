@@ -432,7 +432,7 @@ class MatchManager(models.Manager):
             can_edit=can_edit,
         ).distinct().order_by(
             "stage",
-            models.F("datetime_first_period").desc(nulls_first=True),
+            models.F("datetime_last_period").desc(nulls_first=True),
             models.F("datetime_started").desc(nulls_first=True),
             "-pk",
         )  # Meta.ordering not obeyed, so sort explicitly

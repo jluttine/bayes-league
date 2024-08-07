@@ -39,6 +39,13 @@ class PlayerForm(ModelForm):
         model = models.Player
         fields = ["name"]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs.update(dict(
+            autofocus=True,
+        ))
+        return
+
 
 class PlayerMultipleChoiceField(ModelMultipleChoiceField):
     def label_from_instance(self, member):
@@ -59,6 +66,10 @@ class StageForm(ModelForm):
         ).filter(
             league=self.instance.league
         )
+        self.fields['name'].widget.attrs.update(dict(
+            autofocus=True,
+        ))
+        return
 
 
 class ResultForm(ModelForm):

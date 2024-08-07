@@ -1055,14 +1055,19 @@ def view_match(request, league_slug, match_uuid):
 
 
 def start_match(request, league_slug, match_uuid):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
     # NOTE: We allow all users to mark matches as started
-    models.Match.objects.filter(
+    m = models.Match.objects.filter(
         league__slug=league_slug,
         uuid=match_uuid,
         datetime_started=None,
-    ).update(
-        datetime_started=Now(),
     )
+
+    if league.write_protected and user != "admin":
+        m = m.filter(Q(home_team__uuid=user) | Q(away_team__uuid=user))
+
+    m.update(datetime_started=Now())
 
     # Go back to where you came from
     return http.HttpResponseRedirect(
@@ -1077,6 +1082,14 @@ def add_result(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
     user = get_user(league, request)
+
+    if (
+            league.write_protected and
+            user != "admin" and
+            not match.home_team.filter(uuid=user).exists() and
+            not match.away_team.filter(uuid=user).exists()
+    ):
+        raise PermissionDenied()
 
     return model_form_view(
         request,

@@ -1,7 +1,12 @@
 {% extends "leagues/base.html" %}
 
 {% block content %}
-<h1>Log in as:</h1>
+<h1>Log in as (choose below)</h1>
+
+<h2>Spectator (read-only)</h2>
+<a class="button is-large is-success has-text-centered" href="{% url 'logout' league.slug  %}">Spectator</a>
+
+<h2>Player</h2>
 
 <div class="columns is-multiline">
 {% for player in league.player_set.all %}

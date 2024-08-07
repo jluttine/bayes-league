@@ -23,7 +23,12 @@ from . import ranking
 
 def is_admin(league, request):
     admin_key = request.session.get(league.slug, {}).get("admin", None)
-    return admin_key == league.write_key
+    return (
+        # Check None separately because we don't want to claim to be "admin"
+        # user when there's no write key (although admin rights are granted)
+        False if admin_key is None else
+        admin_key == league.write_key
+    )
 
 
 def get_user(league, request):
@@ -653,7 +658,7 @@ def create_match(request, league_slug, stage_slug=None):
     return model_form_view(
         request,
         forms.MatchForm,
-        template="leagues/create_match.html",
+        template="leagues/edit_match.html",
         redirect=lambda stage=None, **_: update_ranking(league, stage),
         context=dict(
             league=league,

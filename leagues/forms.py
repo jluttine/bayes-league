@@ -77,14 +77,24 @@ class MatchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         league = self.instance.league
+
+        # Don't show stage selection if there are no stages
+        if not league.stage_set.exists():
+            del self.fields["stage"]
+        else:
+            self.fields["stage"].queryset = self.fields["stage"].queryset.filter(
+                league=league
+            )
+
+        # Don't show datetime started if the match hasn't been started
+        if self.instance.datetime_started is None:
+            del self.fields["datetime_started"]
+
         self.fields["home_team"] = PlayerMultipleChoiceField(
             queryset = models.Player.objects.filter(league=league)
         )
         self.fields["away_team"] = PlayerMultipleChoiceField(
             queryset = models.Player.objects.filter(league=league)
-        )
-        self.fields["stage"].queryset = self.fields["stage"].queryset.filter(
-            league=league
         )
         return
 

@@ -654,7 +654,7 @@ def create_match(request, league_slug, stage_slug=None):
         request,
         forms.MatchForm,
         template="leagues/create_match.html",
-        redirect=lambda stage, **_: update_ranking(league, stage),
+        redirect=lambda stage=None, **_: update_ranking(league, stage),
         context=dict(
             league=league,
             match=match,
@@ -1127,7 +1127,7 @@ def edit_match(request, league_slug, match_uuid):
         request,
         forms.MatchForm,
         template="leagues/edit_match.html",
-        redirect=lambda stage, **_: update_ranking(league, old_stage, stage),
+        redirect=lambda stage=None, **_: update_ranking(league, old_stage, stage),
         context=dict(
             league=league,
             match=match,

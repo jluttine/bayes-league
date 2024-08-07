@@ -39,7 +39,7 @@
           <b>{{ r.relative_position|floatformat:0 }} %</b>
         </td>
         <td>
-          <b>{{ player.score|floatformat:1 }}</b>
+          <b>{{ player.score|floatformat:3 }}</b>
         </td>
         {% endwith %}
       </tr>
@@ -55,7 +55,7 @@
           {{ rs.relative_position|floatformat:0 }} %
         </td>
         <td>
-          {{ rs.score|floatformat:1 }}
+          {{ rs.score|floatformat:3 }}
         </td>
       </tr>
       {% endfor %}

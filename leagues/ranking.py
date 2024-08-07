@@ -82,8 +82,10 @@ def calculate_ranking(X, n_players, regularisation):
     t = time.monotonic() - t0
     logging.info(f"Ranking calculations completed in {t} seconds, nfev={res.nfev}: {res.message}")
 
-    # Logarithmic scale scores
-    scores = list(10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2))
+    # Logarithmic scale scores. Round the scores to 3 decimals because the
+    # calculation has numerical inaccuracy anyway, so we don't want to have a
+    # different score for players with theoretically equivalen score.
+    scores = list(np.round(10 + 10 * (res.x - numpy.amin(res.x)) / np.log(2), decimals=3))
     # Linear scale scores
     #return 10 * np.exp(res.x - numpy.amin(res.x))
 

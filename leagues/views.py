@@ -834,18 +834,22 @@ def create_even_matches(players):
         #
         # Minimum match counts for each player if we allow the same
         # opponents to be chosen multiple times
+        #
+        # WRONG: This counts matches many times (counts N matches when after
+        # pairing we have N/2 matches)
+        #
         # C_lowerbound = np.sum(
         #     np.amin(
-        #         C[
-        #             # Rows are players
-        #             ps[:,None],
-        #             # Columns are opponents
-        #             np.broadcast_to(ps, (len(ps), len(ps)))
-        #             # Add inf to diagonal so we ignore playing against
-        #             # themselves
-        #         ] + np.diag(np.full(len(ps), np.inf)),
+        #         # Add inf to diagonal so we ignore playing against themselves
+        #         C[ps[:,None], ps[None,:]] + np.diag(np.full(len(ps), np.inf)),
         #         axis=-1,
         #     )
+        # )
+        #
+        # This didn't work either, for some reason..
+        #
+        # C_lowerbound = find_r2_cost_lowerbound(
+        #     C[ps[:,None], ps[None,:]] + np.diag(np.full(len(ps), np.inf)),
         # )
         C_lowerbound = 0
         # Simple lower bound: Minimum ranking difference costs are obtained by
@@ -859,6 +863,10 @@ def create_even_matches(players):
         R2_lowerbound = find_r2_cost_lowerbound(
             # Masked distance matrix. Illegal matches are marked with inf.
             np.where(
+                # This isn't a good criterion when teams have already played
+                # against each other. In that case, this doesn't really mask
+                # anything out because it's the sum of counts that gets bad, not
+                # the single element..
                 C[ps[:,None],ps[None,:]] + current_cost[0] > best_cost[0],
                 np.inf,
                 R2[ps[:,None],ps[None,:]]

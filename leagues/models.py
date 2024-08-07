@@ -435,6 +435,7 @@ class MatchManager(models.Manager):
             "stage",
             models.F("datetime_last_period").desc(nulls_first=True),
             models.F("datetime_started").desc(nulls_first=True),
+            "-datetime",
             "-pk",
         )  # Meta.ordering not obeyed, so sort explicitly
 

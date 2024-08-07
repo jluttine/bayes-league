@@ -51,6 +51,7 @@ class League(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
+        ordering = ["title"]
         constraints = [
             # If the league is write-protected, it must have a write key
             models.CheckConstraint(
@@ -83,7 +84,7 @@ class League(models.Model):
         return
 
     def __str__(self):
-        return f"{self.slug} - {self.title}"
+        return f"{self.title}"
 
 
 class Stage(OrderedModel):
@@ -246,7 +247,7 @@ class Player(models.Model):
         )
 
     def __str__(self):
-        return f"{self.uuid} - {self.name}"
+        return f"{self.name} ({self.league.title})"
 
 
 def annotate_matches_with_periods(matches):
@@ -610,7 +611,7 @@ class Match(models.Model):
             )
 
     def __str__(self):
-        return f"{self.uuid}"
+        return f"{self.uuid} ({self.league.title})"
 
 
 class HomeTeamPlayer(models.Model):

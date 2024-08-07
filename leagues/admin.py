@@ -3,11 +3,24 @@ from django.urls import reverse
 from django.utils.safestring import mark_safe
 from ordered_model.admin import OrderedModelAdmin
 
-from .models import League, Player, Match, Stage, Period
+from .models import (
+    League,
+    Player,
+    Match,
+    Stage,
+    Period,
+    HomeTeamPlayer,
+    AwayTeamPlayer,
+)
 
 
 class LeagueAdmin(admin.ModelAdmin):
+    list_display = ["title", "slug"]
     readonly_fields = ["public_link", "player_link", "admin_link"]
+    search_fields = [
+        "slug",
+        "title",
+    ]
 
     @admin.display(description="Public link")
     def public_link(self, instance):
@@ -42,21 +55,51 @@ class LeagueAdmin(admin.ModelAdmin):
         )
 
 
+class HomeTeamPlayerAdminInline(admin.TabularInline):
+    model = HomeTeamPlayer
+
+
+class AwayTeamPlayerAdminInline(admin.TabularInline):
+    model = AwayTeamPlayer
+
+
 class PeriodAdminInline(admin.TabularInline):
     model = Period
 
 
 class MatchAdmin(admin.ModelAdmin):
+    list_display = ["uuid", "league"]
     inlines = [
+        HomeTeamPlayerAdminInline,
+        AwayTeamPlayerAdminInline,
         PeriodAdminInline,
+    ]
+    search_fields = [
+        "uuid",
+        "league__title",
+        "home_team__name",
+        "away_team__name",
     ]
 
 
 class StageAdmin(OrderedModelAdmin):
-    list_display = ('name', 'move_up_down_links')
+    list_display = ['name', 'league', 'move_up_down_links']
+    search_fields = [
+        "name",
+        "league__title",
+    ]
+
+
+class PlayerAdmin(admin.ModelAdmin):
+    list_display = ["name", "league", "uuid"]
+    search_fields = [
+        "name",
+        "uuid",
+        "league__title",
+    ]
 
 
 admin.site.register(League, LeagueAdmin)
 admin.site.register(Stage, StageAdmin)
-admin.site.register(Player)
+admin.site.register(Player, PlayerAdmin)
 admin.site.register(Match, MatchAdmin)

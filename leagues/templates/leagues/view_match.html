@@ -3,6 +3,17 @@
 {% block content %}
 
 <h1>Match details
+  {% if match.can_edit and match.period_count == 0 %}
+  {% if match.datetime_started is None %}
+  <a class="button is-primary" href="{% url 'start_match' league.slug match.uuid %}">
+    Start
+  </a>
+  {% else %}
+  <a class="button is-primary" href="{% url 'add_result' league.slug match.uuid %}">
+    Add result
+  </a>
+  {% endif %}
+  {% endif %}
   {% if can_administrate %}
   <a class="button is-primary" href="{% url 'edit_match' league.slug match.uuid %}">Edit</a>
   {% endif %}

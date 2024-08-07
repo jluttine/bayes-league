@@ -40,6 +40,11 @@
                     <th>
                         Away
                     </th>
+                    {% if match.pk is not None %}
+                    <th>
+                        Delete?
+                    </th>
+                    {% endif %}
                 </tr>
                 <tr>
                     <th>
@@ -52,10 +57,17 @@
                     <th>
                         {{ form.away_team.errors }} {{ form.away_team }}
                     </th>
+                    {% if match.pk is not None %}
+                    <th></th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
-                {% include "leagues/formset_periods.html" %}
+                {% if match.pk is not None %}
+                {% include "leagues/formset_periods.html" with can_delete=True %}
+                {% else %}
+                {% include "leagues/formset_periods.html" with can_delete=False %}
+                {% endif %}
             </tbody>
         </table>
     </div>

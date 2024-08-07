@@ -29,7 +29,7 @@
                 </tr>
             </thead>
             <tbody>
-                {% include "leagues/formset_periods.html" %}
+                {% include "leagues/formset_periods.html" with can_delete=False %}
             </tbody>
         </table>
     </div>

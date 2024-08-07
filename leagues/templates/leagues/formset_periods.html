@@ -4,6 +4,11 @@
   <td>{{ period_form.home_points }} {{ period_form.home_points.errors }}</td>
   <td />
   <td>{{ period_form.away_points }} {{ period_form.away_points.errors }}</td>
+  {% if can_delete %}
+  <td>
+    {{ period_form.DELETE }}
+  </td>
+  {% endif %}
   {{ period_form.id }}
 </tr>
 {% endfor %}

@@ -1,15 +1,69 @@
 {% extends "leagues/base.html" %}
 
 {% block content %}
-<h1>Edit match</h1>
+<h1>
+    {% if match.pk is None %}
+    Add match
+    {% else %}
+    Edit match
+    {% endif %}
+</h1>
 
+{% if match.pk is None %}
+<form action="{% url 'create_match' match.league.slug %}" method="post">
+{% else %}
 <form action="{% url 'edit_match' match.league.slug match.uuid %}" method="post">
+{% endif %}
     {% csrf_token %}
-    {{ form.as_p }}
-    {{ formset.as_p }}
+    {{ form.non_field_errors }}
+    <div class="fieldWrapper">
+        {{ form.stage.errors }}
+        {{ form.stage.label }} {{ form.stage }}
+    </div>
+    <div class="fieldWrapper">
+        {{ form.datetime_started.errors }}
+        {{ form.datetime_started.label }} {{ form.datetime_started }}
+    </div>
+    {{ formset.management_form }}
+    <div class="table-container">
+        <table class="table is-striped">
+            <thead>
+                <tr>
+                    <th>
+                    </th>
+                    <th>
+                        Home
+                    </th>
+                    <th>
+                        -
+                    </th>
+                    <th>
+                        Away
+                    </th>
+                </tr>
+                <tr>
+                    <th>
+                    </th>
+                    <th>
+                        {{ form.home_team.errors }} {{ form.home_team }}
+                    </th>
+                    <th>
+                    </th>
+                    <th>
+                        {{ form.away_team.errors }} {{ form.away_team }}
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% include "leagues/formset_periods.html" %}
+            </tbody>
+        </table>
+    </div>
+    {% if match.pk is not None %}
     <a class="button is-danger" href="{% url 'delete_match' match.league.slug match.uuid %}">
         Delete
     </a>
+    {% endif %}
     <a class="button is-primary is-light" href="{% url 'view_league' match.league.slug %}">
         Cancel
     </a>

@@ -1,0 +1,9 @@
+{% for period_form in formset %}
+<tr>
+  <td>{{ forloop.counter }}. period {{ period_form.non_field_errors }} </td>
+  <td>{{ period_form.home_points }} {{ period_form.home_points.errors }}</td>
+  <td />
+  <td>{{ period_form.away_points }} {{ period_form.away_points.errors }}</td>
+  {{ period_form.id }}
+</tr>
+{% endfor %}

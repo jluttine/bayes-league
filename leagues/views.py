@@ -256,7 +256,7 @@ def edit_league(request, league_slug):
             # write protection.
             redirect=(
                 reverse(
-                    "login",
+                    "login_admin",
                     args=[league.slug, league.write_key],
                 ) if league.write_protected else
                 reverse(

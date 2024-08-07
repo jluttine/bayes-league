@@ -42,6 +42,12 @@ class League(models.Model):
         max_length=50,
         unique=True,
     )
+    player_selection_key = models.CharField(
+        null=False,
+        blank=False,
+        default=create_key,
+        max_length=50,
+    )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
     class Meta:
@@ -126,8 +132,8 @@ class Stage(OrderedModel):
         self.slug = slugify(self.name)
         return
 
-    def get_matches(self):
-        return Match.objects.with_total_points().filter(
+    def get_matches(self, user):
+        return Match.objects.with_total_points(user).filter(
             models.Q(stage=self) |
             models.Q(stage__in=self.included.all())
         )
@@ -200,6 +206,12 @@ class Player(models.Model):
         blank=True,
         null=True,
         default=None,
+    )
+    key = models.CharField(
+        null=False,
+        blank=False,
+        default=create_key,
+        max_length=50,
     )
 
     class Meta:
@@ -293,7 +305,7 @@ class MatchManager(models.Manager):
     def with_periods(self):
         return annotate_matches_with_periods(self)
 
-    def with_total_points(self, player=None):
+    def with_total_points(self, user, player=None):
         # NOTE: Multiple annotations yield wrong results. So, we need to use a
         # bit more complex solution with subqueries. See:
         # https://stackoverflow.com/a/56619484
@@ -349,6 +361,44 @@ class MatchManager(models.Manager):
                 ),
             )
         )
+        can_edit = (
+            # If no user, league needs to be not write-protected
+            models.Subquery(
+                self.annotate(
+                    can_edit=models.Case(
+                        models.When(
+                            league__write_protected=False,
+                            then=models.Value(True),
+                        ),
+                        default=models.Value(False),
+                    )
+                ).filter(pk=models.OuterRef("pk")).values("can_edit"),
+                output_field=models.BooleanField(),
+            ) if user is None else
+            # Admin can always edit
+            models.Value(True) if user == "admin" else
+            # Otherwise, either not write-protected or user is in the match
+            models.Subquery(
+                self.annotate(
+                    can_edit=models.Case(
+                        models.When(
+                            league__write_protected=False,
+                            then=models.Value(True),
+                        ),
+                        models.When(
+                            home_team__uuid=user,
+                            then=models.Value(True),
+                        ),
+                        models.When(
+                            away_team__uuid=user,
+                            then=models.Value(True),
+                        ),
+                        default=models.Value(False),
+                    )
+                ).filter(pk=models.OuterRef("pk")).values("can_edit"),
+                output_field=models.BooleanField(),
+            )
+        )
         return annotate_matches_with_periods(matches).annotate(
             period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
             total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
@@ -379,6 +429,7 @@ class MatchManager(models.Manager):
             datetime_first_period=models.Min("period__datetime"),
             max_home_points=models.Max("period__home_points"),
             max_away_points=models.Max("period__away_points"),
+            can_edit=can_edit,
         ).distinct().order_by(
             "stage",
             models.F("datetime_first_period").desc(nulls_first=True),

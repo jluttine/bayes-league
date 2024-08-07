@@ -3,7 +3,7 @@
 {% block content %}
 
 <h1>Match details
-  {% if not league.write_protected or league.slug in logins %}
+  {% if can_administrate %}
   <a class="button is-primary" href="{% url 'edit_match' league.slug match.uuid %}">Edit</a>
   {% endif %}
 </h1>

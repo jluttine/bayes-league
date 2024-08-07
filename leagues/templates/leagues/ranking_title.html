@@ -1,5 +1,5 @@
 <h2>Ranking
-{% if not league.write_protected or league.slug in logins %}
-<a class="button is-primary" href="{% url 'create_player' league.slug %}">Add player</a>
-{% endif %}
+  {% if can_administrate %}
+  <a class="button is-primary" href="{% url 'create_player' league.slug %}">Add player</a>
+  {% endif %}
 </h2>

@@ -121,8 +121,18 @@ urlpatterns = [
     ),
     path(
         "league/<slug:league_slug>/login/<key>/",
-        views.login,
-        name="login",
+        views.login_admin,
+        name="login_admin",
+    ),
+    path(
+        "league/<slug:league_slug>/players/<uuid:player_uuid>/login/<key>/",
+        views.login_player,
+        name="login_player",
+    ),
+    path(
+        "league/<slug:league_slug>/players/login/<key>/",
+        views.choose_player_login,
+        name="choose_player_login",
     ),
     path(
         "league/<slug:league_slug>/logout/",

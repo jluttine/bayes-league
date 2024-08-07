@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>{{ player.name }}
-  {% if not league.write_protected or league.slug in logins %}
+  {% if can_administrate %}
   <a class="button is-primary" href="{% url 'edit_player' player.league.slug player.uuid %}">Edit</a>
   {% endif %}
 </h1>

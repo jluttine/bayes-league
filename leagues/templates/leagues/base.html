@@ -52,7 +52,7 @@
               Stats
             </a>
 
-            {% if not league.write_protected or league.slug in logins %}
+            {% if can_administrate %}
             <a class="navbar-item" href="{% url 'edit_league' league.slug %}">
               Settings
             </a>
@@ -62,7 +62,7 @@
               Info
             </a>
 
-            {% if league.write_protected and league.slug in logins %}
+            {% if user_player %}
             <a class="navbar-item" href="{% url 'logout' league.slug %}">
               Logout
             </a>

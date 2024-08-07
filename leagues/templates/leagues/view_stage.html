@@ -3,7 +3,7 @@
 {% block content %}
 <h1>
   {{ stage.name }}
-  {% if not league.write_protected or league.slug in logins %}
+  {% if can_administrate %}
   <a class="button is-primary" href="{% url 'edit_stage' stage.league.slug stage.slug %}">Edit</a>
   {% endif %}
 </h1>

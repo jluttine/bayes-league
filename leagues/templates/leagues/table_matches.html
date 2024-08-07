@@ -72,13 +72,17 @@
           ({% for p in match.period_set.all %}{{ p.home_points }}-{{ p.away_points }}{% if not forloop.last %}, {% endif %}{% endfor %})
           {% endif %}
           {% elif match.datetime_started is None %}
+          {% if match.can_edit %}
           <a class="button is-primary" href="{% url 'start_match' league.slug match.uuid %}">
             Start
           </a>
+          {% endif %}
           {% else %}
+          {% if match.can_edit %}
           <a class="button is-primary" href="{% url 'add_result' league.slug match.uuid %}">
             Add result
           </a>
+          {% endif %}
           {% endif %}
 
         </td>
@@ -117,7 +121,7 @@
             </span>
           </a>
           &nbsp;
-          {% if not league.write_protected or league.slug in logins %}
+          {% if can_administrate %}
           <a href="{% url 'edit_match' league.slug match.uuid %}">
             <span class="icon material-symbols-outlined">
               edit

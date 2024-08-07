@@ -1,0 +1,14 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Log in as:</h1>
+
+<div class="columns is-multiline">
+{% for player in league.player_set.all %}
+  <div class="column is-4">
+  <a class="button is-fullwidth is-large is-primary has-text-centered" href="{% url 'login_player' player.league.slug player.uuid player.key %}">{{ player.name }}</a>
+  </div>
+{% endfor %}
+</div>
+
+{% endblock %}

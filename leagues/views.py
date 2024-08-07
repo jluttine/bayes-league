@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.forms import inlineformset_factory, formset_factory
 from django.conf import settings
 from django.db.models import Q
+from django.core import exceptions
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned
 from django.db import IntegrityError
 from django.db.models.functions import Now
@@ -18,6 +19,37 @@ from django.db.models.functions import Now
 from . import models
 from . import forms
 from . import ranking
+
+
+def is_admin(league, request):
+    admin_key = request.session.get(league.slug, {}).get("admin", None)
+    return admin_key == league.write_key
+
+
+def get_user(league, request):
+    if is_admin(league, request):
+        return "admin"
+
+    user_and_key = request.session.get(league.slug, {}).get("user", "").split("/")
+
+    try:
+        (user, key) = user_and_key
+    except ValueError:
+        return None
+
+    try:
+        player = models.Player.objects.get(uuid=user, key=key)
+    except (exceptions.ValidationError, models.Player.DoesNotExist):
+        return None
+    else:
+        return player.uuid
+
+
+def can_administrate(league, user):
+    return (
+        True if not league.write_protected else
+        user == "admin"
+    )
 
 
 class DummyInlineFormSet():
@@ -94,23 +126,27 @@ def info(request, league_slug):
     # We don't actually use the league but because the league site is the whole
     # website, each league has this same site.
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
     return render(
         request,
         "leagues/info.html",
         dict(
             league=league,
+            user_player=user,
+            can_administrate=can_administrate(league, user)
         ),
     )
 
 
 def view_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
     return render(
         request,
         "leagues/view_league.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points(),
+            matches=league.match_set.with_total_points(user=user),
             ranking=[
                 Namespace(
                     player=p,
@@ -118,6 +154,8 @@ def view_league(request, league_slug):
                 )
                 for p in league.player_set.all().order_by("-score", "name")
             ],
+            user_player=user,
+            can_administrate=can_administrate(league, user)
         )
     )
 
@@ -142,8 +180,9 @@ def create_league(request, league_slug):
 def edit_league(request, league_slug):
 
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
 
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     def move_stage(post):
@@ -193,11 +232,16 @@ def edit_league(request, league_slug):
             league=league,
             stages_triple=stages_triple,
             login_url=request.build_absolute_uri(
-                reverse("login", args=[league.slug, league.write_key])
+                reverse("login_admin", args=[league.slug, league.write_key])
+            ),
+            choose_player_login_url=request.build_absolute_uri(
+                reverse("choose_player_login", args=[league.slug, league.player_selection_key])
             ),
             home_url=request.build_absolute_uri(
                 reverse("view_league", args=[league.slug])
             ),
+            user_player=user,
+            can_administrate=can_administrate(league, user)
         ),
         instance=league,
         redirect=lambda **_: update_ranking(
@@ -225,20 +269,21 @@ def edit_league(request, league_slug):
 
 def view_dashboard(request, league_slug, template="leagues/view_dashboard.html"):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
     return render(
         request,
         template,
         dict(
             league=league,
-            next_matches=list(reversed(league.match_set.with_total_points().filter(
+            next_matches=list(reversed(league.match_set.with_total_points(user=user).filter(
                 period_count=0,
                 datetime_started__isnull=True,
             ).order_by("datetime")[:league.nextup_matches_count])),
-            ongoing_matches=league.match_set.with_total_points().filter(
+            ongoing_matches=league.match_set.with_total_points(user=user).filter(
                 period_count=0,
                 datetime_started__isnull=False,
             ).order_by("-datetime_started"),
-            latest_matches=league.match_set.with_total_points().filter(
+            latest_matches=league.match_set.with_total_points(user=user).filter(
                 period_count__gt=0,
             ).order_by("-datetime_last_period")[:league.latest_matches_count],
             ranking=[
@@ -248,6 +293,8 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
                 )
                 for p in league.player_set.all().order_by("-score", "name")
             ],
+            user_player=user,
+            can_administrate=can_administrate(league, user),
         )
     )
 
@@ -262,35 +309,45 @@ def get_dashboard_content(request, league_slug):
 
 def view_stats(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
     return render(
         request,
         "leagues/view_stats.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points(),
+            matches=league.match_set.with_total_points(user=user),
             players=league.player_set.with_stats().order_by("-score", "name"),
+            user_player=user,
+            can_administrate=can_administrate(league, user),
         )
     )
 
 
 def view_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
+    user = get_user(player.league, request)
     return render(
         request,
         "leagues/view_player.html",
         dict(
             league=player.league,
             player=player,
-            matches=models.Match.objects.with_total_points(player=player),
+            matches=models.Match.objects.with_total_points(
+                user=user,
+                player=player,
+            ),
             ranking_stats=models.RankingScore.objects.with_ranking_stats(player),
+            user_player=user,
+            can_administrate=can_administrate(player.league, user),
         )
     )
 
 
 def create_player(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
 
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     player = models.Player(league=league)
@@ -305,6 +362,8 @@ def create_player(request, league_slug):
         context=dict(
             league=player.league,
             player=player,
+            user_player=user,
+            can_administrate=True,
         ),
         instance=player,
     )
@@ -313,7 +372,8 @@ def create_player(request, league_slug):
 def edit_player(request, league_slug, player_uuid):
 
     league = get_object_or_404(models.League, slug=league_slug)
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    user = get_user(league, request)
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     player = get_object_or_404(models.Player, league=league, uuid=player_uuid)
@@ -328,6 +388,8 @@ def edit_player(request, league_slug, player_uuid):
         context=dict(
             league=player.league,
             player=player,
+            user_player=user,
+            can_administrate=True,
         ),
         instance=player,
     )
@@ -336,7 +398,8 @@ def edit_player(request, league_slug, player_uuid):
 def delete_player(request, league_slug, player_uuid):
 
     league = get_object_or_404(models.League, slug=league_slug)
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    user = get_user(league, request)
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     player = get_object_or_404(models.Player, league=league, uuid=player_uuid)
@@ -356,6 +419,8 @@ def delete_player(request, league_slug, player_uuid):
         dict(
             player=player,
             league=league,
+            user_player=user,
+            can_administrate=True,
         ),
     )
 
@@ -401,7 +466,7 @@ def calculate_ranking(matches, regularisation):
 
 def update_league_ranking(league):
     ms = (
-        models.Match.objects.with_total_points()
+        models.Match.objects.with_total_points(user=None)
         .prefetch_related("home_team")
         .prefetch_related("away_team")
         .filter(league=league)
@@ -425,7 +490,7 @@ def update_stage_ranking(stage, regularisation):
     # Matches contained in the stage
     ms = (
         stage
-        .get_matches()
+        .get_matches(user=None)
         .prefetch_related("home_team")
         .prefetch_related("away_team")
     )
@@ -475,8 +540,9 @@ def update_ranking(league, *stages, redirect=None):
 
 def create_stage(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
 
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     stage = models.Stage(league=league)
@@ -491,6 +557,8 @@ def create_stage(request, league_slug):
         context=dict(
             league=stage.league,
             stage=stage,
+            user_player=user,
+            can_administrate=True,
         ),
         instance=stage,
     )
@@ -498,7 +566,8 @@ def create_stage(request, league_slug):
 
 def edit_stage(request, league_slug, stage_slug):
     league = get_object_or_404(models.League, slug=league_slug)
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    user = get_user(league, request)
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     stage = get_object_or_404(models.Stage, league=league, slug=stage_slug)
@@ -517,6 +586,8 @@ def edit_stage(request, league_slug, stage_slug):
         context=dict(
             league=stage.league,
             stage=stage,
+            user_player=user,
+            can_administrate=True,
         ),
         instance=stage,
     )
@@ -524,7 +595,8 @@ def edit_stage(request, league_slug, stage_slug):
 
 def delete_stage(request, league_slug, stage_slug):
     league = get_object_or_404(models.League, slug=league_slug)
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    user = get_user(league, request)
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     stage = get_object_or_404(models.Stage, league=league, slug=stage_slug)
@@ -541,6 +613,8 @@ def delete_stage(request, league_slug, stage_slug):
             dict(
                 stage=stage,
                 league=league,
+                user_player=user,
+                can_administrate=True,
             ),
         )
 
@@ -550,13 +624,16 @@ def view_stage(request, league_slug, stage_slug):
         league__slug=league_slug,
         slug=stage_slug,
     )
+    user = get_user(stage.league, request)
     return render(
         request,
         "leagues/view_stage.html",
         dict(
             league=stage.league,
             stage=stage,
-            matches=stage.get_matches(),
+            matches=stage.get_matches(user=user),
+            user_player=user,
+            can_administrate=can_administrate(stage.league, user),
         )
     )
 
@@ -567,8 +644,9 @@ def create_match(request, league_slug, stage_slug=None):
         None if stage_slug is None else
         get_object_or_404(models.Stage, league=league, slug=stage_slug)
     )
+    user = get_user(league, request)
 
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     match = models.Match(league=league, stage=stage)
@@ -580,6 +658,8 @@ def create_match(request, league_slug, stage_slug=None):
         context=dict(
             league=league,
             match=match,
+            user_player=user,
+            can_administrate=True,
         ),
         instance=match,
         InlineFormSet=inlineformset_factory(
@@ -858,8 +938,9 @@ def create_even_matches(players):
 
 def create_multiple_matches(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
 
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    if not can_administrate(league, user):
         raise PermissionDenied()
 
     if request.method == "POST":
@@ -898,6 +979,8 @@ def create_multiple_matches(request, league_slug):
                         stage_form=forms.ChooseStageForm(league),
                         league=league,
                         formset=formset,
+                        user_player=user,
+                        can_administrate=True,
                     )
                 )
             return render(
@@ -906,6 +989,8 @@ def create_multiple_matches(request, league_slug):
                 dict(
                     form=form,
                     league=league,
+                    user_player=user,
+                    can_administrate=True,
                 )
             )
 
@@ -935,14 +1020,17 @@ def create_multiple_matches(request, league_slug):
             dict(
                 form=form,
                 league=league,
+                user_player=user,
+                can_administrate=True,
             ),
         )
 
 
 def view_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
     match = get_object_or_404(
-        models.Match.objects.with_total_points(),
+        models.Match.objects.with_total_points(user=user),
         league=league,
         uuid=match_uuid,
     )
@@ -952,6 +1040,8 @@ def view_match(request, league_slug, match_uuid):
         dict(
             league=league,
             match=match,
+            user_player=user,
+            can_administrate=can_administrate(league, user),
         ),
     )
 
@@ -978,6 +1068,7 @@ def start_match(request, league_slug, match_uuid):
 def add_result(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
+    user = get_user(league, request)
 
     return model_form_view(
         request,
@@ -991,6 +1082,8 @@ def add_result(request, league_slug, match_uuid):
         context=dict(
             league=league,
             match=match,
+            user_player=user,
+            can_administrate=can_administrate(league, user),
         ),
         instance=match,
         InlineFormSet=inlineformset_factory(
@@ -1004,7 +1097,8 @@ def add_result(request, league_slug, match_uuid):
 
 def edit_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
-    if league.write_protected and league_slug not in request.session.get("logins", []):
+    user = get_user(league, request)
+    if not can_administrate(league, user):
         raise PermissionDenied()
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
     old_stage = match.stage
@@ -1016,6 +1110,8 @@ def edit_match(request, league_slug, match_uuid):
         context=dict(
             league=league,
             match=match,
+            user_player=user,
+            can_administrate=True,
         ),
         instance=match,
         InlineFormSet=inlineformset_factory(
@@ -1029,6 +1125,9 @@ def edit_match(request, league_slug, match_uuid):
 
 def delete_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+    if not can_administrate(league, user):
+        raise PermissionDenied()
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
 
     if request.method == "POST":
@@ -1045,37 +1144,73 @@ def delete_match(request, league_slug, match_uuid):
             dict(
                 match=match,
                 league=league,
+                user_player=user,
+                can_administrate=True,
             ),
         )
 
 
-def login(request, league_slug, key):
+def login_admin(request, league_slug, key):
     league = get_object_or_404(models.League, slug=league_slug)
 
     if league.write_protected:
         if key != league.write_key:
             raise PermissionDenied()
-        if league_slug not in request.session.get("logins", []):
-            request.session["logins"] = request.session.get("logins", []) + [league_slug]
+        request.session[league.slug] = {
+            "admin": key
+        }
 
     return http.HttpResponseRedirect(
         reverse("view_league", args=[league.slug])
     )
 
 
+def login_player(request, league_slug, player_uuid, key):
+    player = get_object_or_404(
+        models.Player,
+        league__slug=league_slug,
+        uuid=player_uuid,
+    )
+
+    if player.league.write_protected:
+        if key != player.key:
+            raise PermissionDenied()
+        request.session[league_slug] = {
+            "user": f"{player.uuid}/{key}"
+        }
+
+    return http.HttpResponseRedirect(
+        reverse("view_player", args=[league_slug, player.uuid])
+    )
+
+
+def choose_player_login(request, league_slug, key):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+
+    if key != league.player_selection_key:
+        raise PermissionDenied()
+
+    return render(
+        request,
+        "leagues/choose_player_login.html",
+        dict(
+            league=league,
+            user_player=user,
+            can_administrate=can_administrate(league, user),
+        ),
+    )
+
+
 def logout(request, league_slug):
     try:
-        logins = request.session["logins"]
-    except KeyError:
-        pass
-    else:
         # NOTE: We need to assign to request.session dictionary, otherwise
         # Django doesn't notice it has been altered and it won't update the
         # session
-        request.session["logins"] = [
-            x for x in request.session["logins"]
-            if x != league_slug
-        ]
+        del request.session[league_slug]
+    except KeyError:
+        pass
+
     return http.HttpResponseRedirect(
         reverse("view_league", args=[league_slug])
     )

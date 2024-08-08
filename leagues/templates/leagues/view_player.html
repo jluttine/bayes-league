@@ -7,6 +7,12 @@
   {% endif %}
 </h1>
 
+{% if player.description %}
+<p>
+  {{ player.description }}
+</p>
+{% endif %}
+
 {% if player.score is not None %}
 <h2>Ranking history</h2>
 <div class="table-container">

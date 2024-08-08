@@ -6,7 +6,7 @@
 <form action="{% url 'edit_player' player.league.slug player.uuid %}" method="post">
   {% csrf_token %}
   <div class="block">
-  {{ form }}
+  {{ form.as_p }}
   </div>
   <div class="block">
   <a class="button is-danger" href="{% url 'delete_player' player.league.slug player.uuid %}">

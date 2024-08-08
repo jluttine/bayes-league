@@ -37,7 +37,7 @@ class PlayerForm(ModelForm):
 
     class Meta:
         model = models.Player
-        fields = ["name"]
+        fields = ["name", "description"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

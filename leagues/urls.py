@@ -105,6 +105,11 @@ urlpatterns = [
         name="start_match",
     ),
     path(
+        "league/<slug:league_slug>/matches/<uuid:match_uuid>/cancel_start/",
+        views.cancel_start_match,
+        name="cancel_start_match",
+    ),
+    path(
         "league/<slug:league_slug>/matches/<uuid:match_uuid>/result/",
         views.add_result,
         name="add_result",

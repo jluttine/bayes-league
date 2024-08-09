@@ -1083,6 +1083,29 @@ def start_match(request, league_slug, match_uuid):
     )
 
 
+def cancel_start_match(request, league_slug, match_uuid):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+
+    m = models.Match.objects.filter(
+        league__slug=league_slug,
+        uuid=match_uuid,
+    )
+
+    if league.write_protected and user != "admin":
+        m = m.filter(Q(home_team__uuid=user) | Q(away_team__uuid=user))
+
+    m.update(datetime_started=None)
+
+    # Go back to where you came from
+    return http.HttpResponseRedirect(
+        request.META.get(
+            'HTTP_REFERER',
+            reverse("view_match", args=[league_slug, match_uuid]),
+        )
+    )
+
+
 def add_result(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     match = get_object_or_404(models.Match, league=league, uuid=match_uuid)
@@ -1110,6 +1133,7 @@ def add_result(request, league_slug, match_uuid):
             match=match,
             user_player=user,
             can_administrate=can_administrate(league, user),
+            editing=match.period_set.exists(),
         ),
         instance=match,
         InlineFormSet=inlineformset_factory(

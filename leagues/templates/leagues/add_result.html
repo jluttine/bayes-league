@@ -1,7 +1,7 @@
 {% extends "leagues/base.html" %}
 
 {% block content %}
-<h1>Add result</h1>
+<h1>{% if editing %}Edit{% else %}Add{% endif %} result</h1>
 
 <form action="{% url 'add_result' match.league.slug match.uuid %}" method="post">
     {% csrf_token %}
@@ -26,10 +26,19 @@
                         {{ player.name }}
                         {% endfor %}
                     </th>
+                    {% if editing %}
+                    <th>
+                        Delete period?
+                    </th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
+                {% if editing %}
+                {% include "leagues/formset_periods.html" with can_delete=True %}
+                {% else %}
                 {% include "leagues/formset_periods.html" with can_delete=False %}
+                {% endif %}
             </tbody>
         </table>
     </div>

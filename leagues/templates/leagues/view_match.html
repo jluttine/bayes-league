@@ -3,7 +3,8 @@
 {% block content %}
 
 <h1>Match details
-  {% if match.can_edit and match.period_count == 0 %}
+  {% if match.can_edit %}
+  {% if match.period_count == 0 %}
   {% if match.datetime_started is None %}
   <a class="button is-primary" href="{% url 'start_match' league.slug match.uuid %}">
     Start
@@ -12,6 +13,14 @@
   <a class="button is-primary" href="{% url 'add_result' league.slug match.uuid %}">
     Add result
   </a>
+  <a class="button is-primary" href="{% url 'cancel_start_match' league.slug match.uuid %}">
+    Cancel the start
+  </a>
+  {% endif %}
+  {% else %}
+  <a class="button is-primary" href="{% url 'add_result' league.slug match.uuid %}">
+    Edit result
+  </a>
   {% endif %}
   {% endif %}
   {% if can_administrate %}
@@ -19,7 +28,16 @@
   {% endif %}
 </h1>
 
-{{ match.datetime_last_period|date:'l G:i, F j, Y' }}
+{% if match.datetime_started %}
+<p>
+  Match started: {{ match.datetime_started|date:'l G:i, F j, Y' }}
+</p>
+{% endif %}
+{% if match.datetime_last_period %}
+<p>
+  Match ended: {{ match.datetime_last_period|date:'l G:i, F j, Y' }}
+</p>
+{% endif %}
 
 <div class="table-container">
   <table class="table is-striped">

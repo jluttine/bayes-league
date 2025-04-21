@@ -4,6 +4,7 @@ from django.forms import (
     ModelMultipleChoiceField,
     ModelChoiceField,
     DateTimeField,
+    IntegerField,
 )
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -169,4 +170,16 @@ class BulkMatchForm(Form):
         self.fields["players"].queryset = models.Player.objects.filter(league=league)
         self.fields["players"].initial = self.fields["players"].queryset
         #self.fields["datetime"].initial = timezone.now()
+        return
+
+
+class TournamentForm(Form):
+    players = PlayerMultipleChoiceField(models.Player.objects.all())
+    team_size = IntegerField(initial=1, min_value=1)
+    courts = IntegerField(initial=1, min_value=1)
+
+    def __init__(self, league, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["players"].queryset = models.Player.objects.filter(league=league)
+        self.fields["players"].initial = self.fields["players"].queryset
         return

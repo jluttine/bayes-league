@@ -95,6 +95,11 @@ urlpatterns = [
         name="create_multiple_matches",
     ),
     path(
+        "league/<slug:league_slug>/matches/generate_tournament/",
+        views.generate_tournament,
+        name="generate_tournament",
+    ),
+    path(
         "league/<slug:league_slug>/matches/<uuid:match_uuid>/",
         views.view_match,
         name="view_match",

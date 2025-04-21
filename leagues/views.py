@@ -19,6 +19,7 @@ from django.db.models.functions import Now
 from . import models
 from . import forms
 from . import ranking
+from . import tournament
 
 
 def is_admin(league, request):
@@ -1030,6 +1031,111 @@ def create_multiple_matches(request, league_slug):
         return render(
             request,
             "leagues/create_multiple_matches.html",
+            dict(
+                form=form,
+                league=league,
+                user_player=user,
+                can_administrate=True,
+            ),
+        )
+
+
+def generate_tournament(request, league_slug):
+
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    if request.method == "POST":
+
+        if "generate" in request.POST:
+
+            form = forms.TournamentForm(league, request.POST)
+
+            if form.is_valid():
+                players = form.cleaned_data["players"]
+
+                ms = tournament.greedy(
+                    len(players),
+                    form.cleaned_data["team_size"],
+                    courts=form.cleaned_data["courts"],
+                )
+
+                matches = [
+                    (
+                        # Home team
+                        [p for (p, mi) in zip(players, m) if mi == 1],
+                        # Away team
+                        [p for (p, mi) in zip(players, m) if mi == -1],
+                    )
+                    for m in ms
+                ]
+
+                DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
+                formset = DummyMatchFormset(
+                    initial=[
+                        dict(
+                            home_team=home,
+                            away_team=away,
+                        )
+                        for (home, away) in matches
+                    ],
+                )
+                # Use the algorithm to create matches
+                #
+                # Show a page that lists the games and asks for confirmation
+                # matches = [
+                #     (p1, p2)
+                #     for (p1, p2) in zip(players[0::2], players[1::2])
+                # ]
+                return render(
+                    request,
+                    "leagues/generate_tournament.html",
+                    dict(
+                        form=form,
+                        stage_form=forms.ChooseStageForm(league),
+                        league=league,
+                        formset=formset,
+                        user_player=user,
+                        can_administrate=True,
+                    )
+                )
+            return render(
+                request,
+                "leagues/generate_tournament.html",
+                dict(
+                    form=form,
+                    league=league,
+                    user_player=user,
+                    can_administrate=True,
+                )
+            )
+
+        elif "confirm" in request.POST:
+            DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
+            stage_form = forms.ChooseStageForm(league, request.POST)
+            formset = DummyMatchFormset(request.POST, initial=[])
+            if stage_form.is_valid():
+                stage = stage_form.cleaned_data["stage"]
+                for f in formset:
+                    f.instance.league = league
+                    f.instance.stage = stage
+                    if f.is_valid():
+                        instance = f.save()
+            # Redirect to the stage page
+            return http.HttpResponseRedirect(
+                reverse("view_league", args=[league.slug])
+            )
+        else:
+            raise RuntimeError("Unknown form")
+
+    else:
+        form = forms.TournamentForm(league)
+        return render(
+            request,
+            "leagues/generate_tournament.html",
             dict(
                 form=form,
                 league=league,

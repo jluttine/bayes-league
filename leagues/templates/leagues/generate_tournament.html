@@ -1,0 +1,80 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Generate tournament matches</h1>
+
+<div class="block">
+  <form action="{% url 'generate_tournament' league.slug %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <a class="button is-primary is-light" href="{% url 'view_league' league.slug %}">Cancel</a>
+    <input class="button is-primary" type="submit" name="generate" value="Generate">
+  </form>
+</div>
+
+{% if formset %}
+
+<div class="block">
+The following matches would be created. Please confirm below or modify the settings above and re-generate a new set of matches.
+</div>
+
+<form action="{% url 'generate_tournament' league.slug %}" method="post">
+{% csrf_token %}
+{{ formset.management_form }}
+
+<div class="table-container">
+  <table class="table is-striped">
+    <thead>
+      <tr>
+        <th>Home team</th>
+        <th></th>
+        <th>Away team</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in formset %}
+      <tr>
+        <td>
+          {{ f.league.as_hidden }}
+          {{ f.stage.as_hidden }}
+          {{ f.home_team.as_hidden }}
+          {% for p in f.home_team.initial %}
+          {{ p.name }} <br />
+          {% endfor %}
+        </td>
+        <td>
+          -
+        </td>
+        <td>
+          {{ f.away_team.as_hidden }}
+          {% for p in f.away_team.initial %}
+          {{ p.name }} <br />
+          {% endfor %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="block">
+  Choose the stage which the matches will be added to:
+</div>
+
+<div class="block">
+{{ stage_form }}
+</div>
+
+<div class="block">
+Do you want to create these matches?
+</div>
+
+<div class="block">
+<input class="button is-success" type="submit" name="confirm" value="Yes, create" />
+</div>
+
+</form>
+
+{% endif %}
+
+{% endblock %}

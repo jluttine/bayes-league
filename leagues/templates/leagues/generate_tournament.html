@@ -26,6 +26,7 @@ The following matches would be created. Please confirm below or modify the setti
   <table class="table is-striped">
     <thead>
       <tr>
+        <th>Datetime</th>
         <th>Home team</th>
         <th></th>
         <th>Away team</th>
@@ -38,6 +39,10 @@ The following matches would be created. Please confirm below or modify the setti
           {{ f.league.as_hidden }}
           {{ f.stage.as_hidden }}
           {{ f.home_team.as_hidden }}
+          {{ f.datetime.as_hidden }}
+          {{ f.datetime.initial|date:'Y-m-d H:i' }}
+        </td>
+        <td>
           {% for p in f.home_team.initial %}
           {{ p.name }} <br />
           {% endfor %}

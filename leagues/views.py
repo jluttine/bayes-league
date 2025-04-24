@@ -1,5 +1,6 @@
 import functools
 import logging
+import datetime
 import time
 from argparse import Namespace
 import re
@@ -1061,10 +1062,15 @@ def generate_tournament(request, league_slug):
             if form.is_valid():
                 players = form.cleaned_data["players"]
 
+                courts = min(
+                    len(players) // (2 * form.cleaned_data["team_size"]),
+                    form.cleaned_data["courts"],
+                )
+
                 ms = tournament.greedy(
                     len(players),
                     form.cleaned_data["team_size"],
-                    courts=form.cleaned_data["courts"],
+                    courts=courts,
                     special_player_mode=form.cleaned_data["special_player_mode"],
                 )
 
@@ -1078,14 +1084,26 @@ def generate_tournament(request, league_slug):
                     for m in ms
                 ]
 
+                t0 = form.cleaned_data["datetime"]
+                duration = form.cleaned_data["duration"]
+                dt = (
+                    datetime.timedelta(0)
+                    if duration is None else
+                    datetime.timedelta(minutes=duration)
+                )
+
                 DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
                 formset = DummyMatchFormset(
                     initial=[
                         dict(
+                            datetime=(
+                                None if t0 is None else
+                                t0 + (i // courts) * dt
+                            ),
                             home_team=home,
                             away_team=away,
                         )
-                        for (home, away) in matches
+                        for (i, (home, away)) in enumerate(matches)
                     ],
                 )
                 # Use the algorithm to create matches
@@ -1153,7 +1171,7 @@ def generate_tournament(request, league_slug):
 def view_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
-    next_up = self.league.next_up_matches()
+    next_up = league.next_up_matches()
     match = get_object_or_404(
         models.Match.objects.with_total_points(user=user, next_up=next_up),
         league=league,

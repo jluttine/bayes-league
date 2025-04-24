@@ -150,7 +150,7 @@ class DummyMatchForm(ModelForm):
 
     class Meta:
         model = models.Match
-        fields = ["home_team", "away_team"]
+        fields = ["datetime", "home_team", "away_team"]
 
     clean = MatchForm.clean
 
@@ -182,6 +182,18 @@ class TournamentForm(Form):
         initial=False,
         help_text="birthday mode where one player plays with everyone",
         required=False,
+    )
+    datetime = DateTimeField(
+        initial=timezone.now(),
+        label="Starting datetime of the first round",
+        required=True,
+    )
+    duration = IntegerField(
+        initial=1,
+        min_value=0,
+        label="Round duration",
+        help_text="minutes between rounds",
+        required=True,
     )
 
     def __init__(self, league, *args, **kwargs):

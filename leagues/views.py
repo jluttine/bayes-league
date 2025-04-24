@@ -1061,6 +1061,7 @@ def generate_tournament(request, league_slug):
                     len(players),
                     form.cleaned_data["team_size"],
                     courts=form.cleaned_data["courts"],
+                    special_player_mode=form.cleaned_data["special_player_mode"],
                 )
 
                 matches = [

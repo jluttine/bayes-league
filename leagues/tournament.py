@@ -217,27 +217,144 @@ def greedy(n, m, courts=None, special_player_mode=False):
         position_scores_together = np.zeros((position_count, n))
         position_scores_against = np.zeros((position_count, n))
 
-        for ind in range(position_count):
+        def update(game, side, player):
+            """Update new matches and position scores"""
+            nonlocal new_matches
+            nonlocal position_scores_together
+            nonlocal position_scores_against
+            new_matches[game, player] = side
+            position_scores_together += np.where(
+                (game == game_iter[:,None]) & (side == side_iter[:,None]),
+                together[:,player],
+                0,
+            )
+            position_scores_against += np.where(
+                (game == game_iter[:,None]) & (side != side_iter[:,None]),
+                against[:,player],
+                0,
+            )
+            return
+
+        if special_player_mode:
+            # The special player is always a home player in the first match. The
+            # special player is also assumed to be the first player on the list.
+            game = 0
+            side = 1
+            special_player = 0
+            update(game, side, special_player)
+
+            # Thinking of the criteria with a simple example:
+            #
+            # A) 0 game, no special player games
+            # B) 1 game, no special player games
+            # C) 1 game, including 1 with special player
+            # D) 1 game, including 1 against special player
+            #
+            # Priority orders:
+            #
+            # For normal matches: A,CD,B
+            #   - has played the least "normal" matches
+            #   - has the most other obligations: together + against
+            #
+            # For with special: A,BD,C
+            #   - has played the least "with special" matches
+            #   - has the most other obligations: normal + against
+            #
+            # For against special: A,BC,D
+            #   - has played the least "against special" matches
+            #   - has the most other obligations: normal + together
+            #
+            # normal = all - together - against
+            #
+            # ==>
+            #
+            # normal + against = all - together
+            #
+            # normal + together = all - against
+
+            for ind in range(m-1):
+                player = arglexmin([
+                    # 1) Hasn't played on this round yet
+                    np.sum(np.abs(new_matches), axis=0),
+                    # 2) Has played the least with the special player
+                    together[special_player,:],
+                    # 3) Has played the least the other games (against special
+                    # or normal game), so has the most obligations left in the
+                    # following rounds
+                    np.diag(together) - together[special_player,:],
+                    # 4) Has the least obligations left in the more competed
+                    # obligation (against special) so it's not wanted there that
+                    # much
+                    -against[special_player,:],
+                    # 5) Has played the least with the other players in the team
+                    np.sum(together[:,new_matches[game]==side], axis=-1),
+                ])
+                update(game, side, player)
+
+            side = -1
+            for jnd in range(m):
+                player = arglexmin([
+                    # 1) Hasn't played on this round yet
+                    np.sum(np.abs(new_matches), axis=0),
+                    # 2) Has played the least against the special player
+                    against[special_player,:],
+                    # 5) Has played the least with the other players in the team
+                    np.sum(together[:,new_matches[game]==side], axis=-1),
+                    # 6) Has played the least against the players in the other team
+                    np.sum(against[:,new_matches[game]==-side], axis=-1),
+                    # 3) Has played the least with the special player so will be
+                    # needed there in the following rounds
+                    together[special_player,:],
+                    # 4) Has the least obligations in the yet to be assigned
+                    # obligation (normal matches) so it's not wanted there that
+                    # much
+                    -(np.diag(together) - against[special_player,:] - together[special_player,:]),
+                ])
+                update(game, side, player)
+
+        for ind in range(0, position_count):
             game = game_iter[ind]
             side = side_iter[ind]
+            if game == 0 and special_player_mode:
+                # We filled the first match already
+                continue
             player = arglexmin(
                 [
-                    # Hasn't played on this round yet
+                    # 1) Hasn't played on this round yet
                     np.sum(np.abs(new_matches), axis=0),
-                    # Has played the least before
-                    np.diag(together),
-                    # Has played the least with the other players in the team
+                    # 2) Has played the least "normal" matches
+                    np.diag(together) - (
+                        np.zeros(n) if not special_player_mode else (
+                            together[special_player,:] +
+                            against[special_player,:]
+                        )
+                    ),
+                    # 3) Has played the least the other games (with or against
+                    # special), so has the most other obligations left
+                    np.zeros(n) if not special_player_mode else (
+                        together[special_player,:] +
+                        against[special_player,:]
+                    ),
+                    # 4) Has played the least with the other players in the team
                     np.sum(together[:,new_matches[game]==side], axis=-1),
-                    # Has played the least against the players in the other team
+                    # 5) Has played the least against the players in the other
+                    # team
                     np.sum(against[:,new_matches[game]==-side], axis=-1),
-                    # The remaining open positions would be bad for the player
+                    # ?) Has played the least on either side of the players in
+                    # the match
+                    np.sum(
+                        together[:,new_matches[game]!=0] +
+                        against[:,new_matches[game]!=0],
+                        axis=-1,
+                    ),
+                    # 6) The remaining open positions would be bad for the
+                    # player
+                    -(
+                        np.sum(position_scores_together[(ind+1):,:], axis=0) +
+                        np.sum(position_scores_against[(ind+1):,:], axis=0)
+                    ),
                     -np.sum(position_scores_together[(ind+1):,:], axis=0),
                     -np.sum(position_scores_against[(ind+1):,:], axis=0),
-                    *list(-np.sort(
-                        position_scores_together[(ind+1):,:] +
-                        position_scores_against[(ind+1):,:],
-                        axis=0,
-                    )),
                 ]
             )
             position_scores_together += np.where(
@@ -253,9 +370,17 @@ def greedy(n, m, courts=None, special_player_mode=False):
             new_matches[game, player] = side
         return new_matches
 
+    if m == 1:
+        # As the conditions below only check for "playing together", those
+        # conditions don't work with single-player tournaments.
+        raise NotImplementedError(
+            "Single-player tournament not yet supported."
+        )
+
     while (
             # Form matches until everyone has played with everyone enough times
             # or someone has played too often with someone
+            (not special_player_mode) and
             (np.amin(together) < m-1) and
             (np.amax(together0) < m)
     ) or (
@@ -304,6 +429,9 @@ def analyse_breaks(matches, courts):
 
 def sort_players(matches):
     """Sort players in matches so that first players have "better" schedules"""
+
+    if np.shape(matches)[0] == 0:
+        return matches
 
     (together, against) = analyse_teaming(matches)
     # Sort the players
@@ -379,6 +507,9 @@ def group_to_rounds(matches, courts):
 
 def sort_rounds(matches, courts):
     """Order match rounds so that breaks are spread evenly"""
+
+    if np.shape(matches)[0] == 0:
+        return matches
 
     rounds = analyse_breaks(matches, courts)
 

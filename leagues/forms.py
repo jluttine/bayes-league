@@ -5,6 +5,7 @@ from django.forms import (
     ModelChoiceField,
     DateTimeField,
     IntegerField,
+    BooleanField,
 )
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -175,8 +176,13 @@ class BulkMatchForm(Form):
 
 class TournamentForm(Form):
     players = PlayerMultipleChoiceField(models.Player.objects.all())
-    team_size = IntegerField(initial=1, min_value=1)
+    team_size = IntegerField(initial=2, min_value=2)
     courts = IntegerField(initial=1, min_value=1)
+    special_player_mode = BooleanField(
+        initial=False,
+        help_text="birthday mode where one player plays with everyone",
+        required=False,
+    )
 
     def __init__(self, league, *args, **kwargs):
         super().__init__(*args, **kwargs)

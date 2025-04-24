@@ -147,12 +147,13 @@ def info(request, league_slug):
 def view_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
+    next_up = league.next_up_matches()
     return render(
         request,
         "leagues/view_league.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points(user=user),
+            matches=league.match_set.with_total_points(user=user, next_up=next_up),
             ranking=[
                 Namespace(
                     player=p,
@@ -276,20 +277,21 @@ def edit_league(request, league_slug):
 def view_dashboard(request, league_slug, template="leagues/view_dashboard.html"):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
+    next_up = league.next_up_matches()
     return render(
         request,
         template,
         dict(
             league=league,
-            next_matches=list(reversed(league.match_set.with_total_points(user=user).filter(
+            next_matches=list(reversed(league.match_set.with_total_points(next_up=next_up, user=user).filter(
                 period_count=0,
                 datetime_started__isnull=True,
             ).order_by("datetime")[:league.nextup_matches_count])),
-            ongoing_matches=league.match_set.with_total_points(user=user).filter(
+            ongoing_matches=league.match_set.with_total_points(user=user, next_up=None).filter(
                 period_count=0,
                 datetime_started__isnull=False,
             ).order_by("-datetime_started"),
-            latest_matches=league.match_set.with_total_points(user=user).filter(
+            latest_matches=league.match_set.with_total_points(user=user, next_up=None).filter(
                 period_count__gt=0,
             ).order_by("-datetime_last_period")[:league.latest_matches_count],
             ranking=[
@@ -321,7 +323,7 @@ def view_stats(request, league_slug):
         "leagues/view_stats.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points(user=user),
+            matches=league.match_set.with_total_points(user=user, next_up=None),
             players=league.player_set.with_stats().order_by("-score", "name"),
             user_player=user,
             can_administrate=can_administrate(league, user),
@@ -332,6 +334,7 @@ def view_stats(request, league_slug):
 def view_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
     user = get_user(player.league, request)
+    next_up = player.league.next_up_matches()
     return render(
         request,
         "leagues/view_player.html",
@@ -341,6 +344,7 @@ def view_player(request, league_slug, player_uuid):
             matches=models.Match.objects.with_total_points(
                 user=user,
                 player=player,
+                next_up=next_up,
             ),
             ranking_stats=models.RankingScore.objects.with_ranking_stats(player),
             user_player=user,
@@ -472,7 +476,7 @@ def calculate_ranking(matches, regularisation):
 
 def update_league_ranking(league):
     ms = (
-        models.Match.objects.with_total_points(user=None)
+        models.Match.objects.with_total_points(user=None, next_up=None)
         .prefetch_related("home_team")
         .prefetch_related("away_team")
         .filter(league=league)
@@ -1149,8 +1153,9 @@ def generate_tournament(request, league_slug):
 def view_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
+    next_up = self.league.next_up_matches()
     match = get_object_or_404(
-        models.Match.objects.with_total_points(user=user),
+        models.Match.objects.with_total_points(user=user, next_up=next_up),
         league=league,
         uuid=match_uuid,
     )

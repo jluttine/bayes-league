@@ -83,6 +83,12 @@ class League(models.Model):
         #     self.write_key = None
         return
 
+    def next_up_matches(self):
+        return self.match_set.with_period_count().filter(
+            period_count=0,
+            datetime_started__isnull=True,
+        ).order_by("datetime")[:self.nextup_matches_count]
+
     def __str__(self):
         return f"{self.title}"
 
@@ -134,7 +140,8 @@ class Stage(OrderedModel):
         return
 
     def get_matches(self, user):
-        return Match.objects.with_total_points(user).filter(
+        next_up = self.league.next_up_matches()
+        return Match.objects.with_total_points(user, next_up=next_up).filter(
             models.Q(stage=self) |
             models.Q(stage__in=self.included.all())
         )
@@ -254,6 +261,17 @@ class Player(models.Model):
         return f"{self.name} ({self.league.title})"
 
 
+def annotate_matches_with_period_count(matches):
+    period_count = matches.annotate(
+        period_count=models.Count("period", distinct=True),
+    ).filter(pk=models.OuterRef("pk"))
+    return matches.annotate(
+        period_count=models.Subquery(
+            period_count.values("period_count"),
+            output_field=models.PositiveIntegerField(),
+        ),
+    )
+
 def annotate_matches_with_periods(matches):
     home_periods = matches.filter(
         pk=models.OuterRef("pk"),
@@ -267,7 +285,7 @@ def annotate_matches_with_periods(matches):
     ).annotate(
         away_periods=models.Count("period", distinct=True),
     )
-    return matches.annotate(
+    return annotate_matches_with_period_count(matches).annotate(
         home_periods=models.functions.Coalesce(
             models.Subquery(
                 home_periods.values("home_periods"),
@@ -307,17 +325,19 @@ class MatchManager(models.Manager):
             models.Q(home_team__in=players) & models.Q(away_team__in=players)
         ).distinct()
 
+    def with_period_count(self):
+        return annotate_matches_with_period_count(self)
+
     def with_periods(self):
         return annotate_matches_with_periods(self)
 
-    def with_total_points(self, user, player=None):
+    def with_total_points(self, user, next_up, player=None):
+        if next_up is None:
+            next_up = Match.objects.none()
         # NOTE: Multiple annotations yield wrong results. So, we need to use a
         # bit more complex solution with subqueries. See:
         # https://stackoverflow.com/a/56619484
         # https://docs.djangoproject.com/en/4.2/topics/db/aggregation/#combining-multiple-aggregations
-        period_count = self.annotate(
-            period_count=models.Count("period", distinct=True),
-        ).filter(pk=models.OuterRef("pk"))
         total_home_points = self.annotate(
             total_home_points=models.Sum("period__home_points")
         ).filter(pk=models.OuterRef("pk"))
@@ -366,6 +386,20 @@ class MatchManager(models.Manager):
                 ),
             )
         )
+        can_start = (
+            models.Subquery(
+                self.annotate(
+                    can_start=models.Case(
+                        models.When(
+                            pk__in=next_up,
+                            then=models.Value(True),
+                        ),
+                        default=models.Value(False),
+                    )
+                ).filter(pk=models.OuterRef("pk")).values("can_start"),
+                output_field=models.BooleanField(),
+            )
+        )
         can_edit = (
             # If no user, league needs to be not write-protected
             models.Subquery(
@@ -405,7 +439,6 @@ class MatchManager(models.Manager):
             )
         )
         return annotate_matches_with_periods(matches).annotate(
-            period_count=models.Subquery(period_count.values("period_count"), output_field=models.PositiveIntegerField()),
             total_home_points=models.Subquery(total_home_points.values("total_home_points"), output_field=models.PositiveIntegerField()),
             total_away_points=models.Subquery(total_away_points.values("total_away_points"), output_field=models.PositiveIntegerField()),
             bonus=models.Case(
@@ -435,6 +468,7 @@ class MatchManager(models.Manager):
             max_home_points=models.Max("period__home_points"),
             max_away_points=models.Max("period__away_points"),
             can_edit=can_edit,
+            can_start=can_start,
         ).distinct().order_by(
             "stage",
             models.F("datetime_last_period").desc(nulls_first=True),

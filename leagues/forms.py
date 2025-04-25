@@ -117,7 +117,7 @@ class MatchForm(ModelForm):
 
     class Meta:
         model = models.Match
-        fields = ["stage", "datetime_started", "home_team", "away_team"]
+        fields = ["stage", "datetime", "datetime_started", "home_team", "away_team"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -129,6 +129,14 @@ class MatchForm(ModelForm):
             del self.fields["stage"]
         else:
             self.fields["stage"].queryset = stages
+
+        # Don't show scheduled time if the match has already been started or
+        # finished
+        if self.instance.pk is not None and (
+                self.instance.datetime_started is not None or
+                self.instance.period_set.count() > 0
+        ):
+            del self.fields["datetime"]
 
         # Don't show datetime started if the match hasn't been started
         if self.instance.datetime_started is None:

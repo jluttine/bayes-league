@@ -16,6 +16,7 @@
 {% endif %}
     {% csrf_token %}
     {{ form.non_field_errors }}
+    {{ form.last_updated_constraint }}
     <div class="fieldWrapper">
         {{ form.stage.errors }}
         {{ form.stage.label }} {{ form.stage }}

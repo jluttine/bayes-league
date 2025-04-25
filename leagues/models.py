@@ -520,6 +520,7 @@ class Match(models.Model):
         default=uuid.uuid4,
         editable=False,
     )
+    last_updated = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ["-datetime"]

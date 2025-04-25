@@ -6,6 +6,7 @@ from django.forms import (
     DateTimeField,
     IntegerField,
     BooleanField,
+    HiddenInput,
 )
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -76,12 +77,43 @@ class StageForm(ModelForm):
 
 class ResultForm(ModelForm):
 
+    last_updated_constraint = DateTimeField(
+        required=False,
+        widget=HiddenInput(),
+    )
+
     class Meta:
         model = models.Match
         fields = []
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["last_updated_constraint"].initial = self.instance.last_updated
+        return
+
+    def clean(self):
+        # NOTE: This doesn't provide atomic database-level guarantee that we
+        # save only if the match hasn't been edited in the meanwhile. For that,
+        # we should do something like:
+        #
+        #   filter(last_updated=last_updated).update(...)
+        #
+        # But let's leave that for later, because it's not easy to add while
+        # using the built-in form/formset features.
+        if self.instance.last_updated != self.cleaned_data.get("last_updated_constraint"):
+            raise ValidationError(
+                "Someone had modified the match at the same time. "
+                "Please cancel and try again if needed."
+            )
+        return
+
 
 class MatchForm(ModelForm):
+
+    last_updated_constraint = DateTimeField(
+        required=False,
+        widget=HiddenInput(),
+    )
 
     class Meta:
         model = models.Match
@@ -108,9 +140,24 @@ class MatchForm(ModelForm):
         self.fields["away_team"] = PlayerMultipleChoiceField(
             queryset = models.Player.objects.filter(league=league)
         )
+        self.fields["last_updated_constraint"].initial = self.instance.last_updated
         return
 
     def clean(self):
+        # NOTE: This doesn't provide atomic database-level guarantee that we
+        # save only if the match hasn't been edited in the meanwhile. For that,
+        # we should do something like:
+        #
+        #   filter(last_updated=last_updated).update(...)
+        #
+        # But let's leave that for later, because it's not easy to add while
+        # using the built-in form/formset features.
+        if self.instance.last_updated != self.cleaned_data.get("last_updated_constraint"):
+            raise ValidationError(
+                "Someone had modified the match at the same time. "
+                "Please cancel and try again if needed."
+            )
+
         # NOTE: These constraints can't be defined in Model Constraints because
         # the constraints depend on multiple tables. They can't be defined in
         # Model.clean because ManyToManyField isn't available there. So, they

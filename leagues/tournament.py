@@ -357,17 +357,7 @@ def greedy(n, m, courts=None, special_player_mode=False):
                     -np.sum(position_scores_against[(ind+1):,:], axis=0),
                 ]
             )
-            position_scores_together += np.where(
-                (game == game_iter[:,None]) & (side == side_iter[:,None]),
-                together[:,player],
-                0,
-            )
-            position_scores_against += np.where(
-                (game == game_iter[:,None]) & (side != side_iter[:,None]),
-                against[:,player],
-                0,
-            )
-            new_matches[game, player] = side
+            update(game, side, player)
         return new_matches
 
     if m == 1:

@@ -279,6 +279,26 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
     next_up = league.next_up_matches()
+    stages = league.stage_set.filter(on_dashboard=True)
+    rankings = [
+        (stage.name, stage.rankingscore_set.all())
+        for stage in stages
+    ]
+    if len(rankings) == 0:
+        # If no stages selected to dashboard, show overall ranking
+        rankings = [
+            (
+                "",
+                [
+                    Namespace(
+                        player=p,
+                        score=p.score,
+                    )
+                    for p in league.player_set.all().order_by("-score", "name")
+                ]
+            )
+        ]
+
     return render(
         request,
         template,
@@ -295,13 +315,7 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
             latest_matches=league.match_set.with_total_points(user=user, next_up=None).filter(
                 period_count__gt=0,
             ).order_by("-datetime_last_period")[:league.latest_matches_count],
-            ranking=[
-                Namespace(
-                    player=p,
-                    score=p.score,
-                )
-                for p in league.player_set.all().order_by("-score", "name")
-            ],
+            ranking=rankings,
             user_player=user,
             can_administrate=can_administrate(league, user),
         )

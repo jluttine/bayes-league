@@ -124,6 +124,10 @@ class Stage(OrderedModel):
         null=True,
         default=None,
     )
+    # Whether to show the ranking of this stage in the dashboard
+    on_dashboard = models.BooleanField(
+        default=False,
+    )
 
     class Meta:
         # The ordering is defined in OrderedModel base class

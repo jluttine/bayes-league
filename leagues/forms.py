@@ -59,7 +59,7 @@ class StageForm(ModelForm):
 
     class Meta:
         model = models.Stage
-        fields = ["name", "bonus", "points_to_win", "included"]
+        fields = ["name", "bonus", "points_to_win", "on_dashboard", "included"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

@@ -1,7 +1,9 @@
 <div class="columns">
   <div class="column">
-    <h2>Ranking</h2>
-    {% include 'leagues/table_ranking.html' with rows=ranking %}
+    {% for r in ranking %}
+    <h2>Ranking {{ r.0 }}</h2>
+    {% include 'leagues/table_ranking.html' with rows=r.1 %}
+    {% endfor %}
   </div>
   <div class="column">
     <h2>Next up</h2>

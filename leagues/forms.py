@@ -231,13 +231,9 @@ class BulkMatchForm(Form):
 
 class TournamentForm(Form):
     players = PlayerMultipleChoiceField(models.Player.objects.all())
+    special_player = ModelChoiceField(models.Player.objects.all(), required=False)
     team_size = IntegerField(initial=2, min_value=2)
     courts = IntegerField(initial=1, min_value=1)
-    special_player_mode = BooleanField(
-        initial=False,
-        help_text="birthday mode where one player plays with everyone",
-        required=False,
-    )
     datetime = DateTimeField(
         initial=timezone.now(),
         label="Starting datetime of the first round",
@@ -255,4 +251,5 @@ class TournamentForm(Form):
         super().__init__(*args, **kwargs)
         self.fields["players"].queryset = models.Player.objects.filter(league=league)
         self.fields["players"].initial = self.fields["players"].queryset
+        self.fields["special_player"].queryset = models.Player.objects.filter(league=league)
         return

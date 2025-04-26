@@ -1074,7 +1074,15 @@ def generate_tournament(request, league_slug):
             form = forms.TournamentForm(league, request.POST)
 
             if form.is_valid():
-                players = form.cleaned_data["players"]
+                players = list(form.cleaned_data["players"])
+                special_player = form.cleaned_data["special_player"]
+
+                if special_player is not None:
+                    try:
+                        players.remove(special_player)
+                    except ValueError:
+                        pass
+                    players = [special_player] + players
 
                 courts = min(
                     len(players) // (2 * form.cleaned_data["team_size"]),
@@ -1085,7 +1093,7 @@ def generate_tournament(request, league_slug):
                     len(players),
                     form.cleaned_data["team_size"],
                     courts=courts,
-                    special_player_mode=form.cleaned_data["special_player_mode"],
+                    special_player_mode=(special_player is not None),
                 )
 
                 matches = [

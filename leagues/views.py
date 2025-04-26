@@ -1221,8 +1221,8 @@ def start_match(request, league_slug, match_uuid):
         datetime_started=None,
     )
 
-    if league.write_protected and user != "admin":
-        m = m.filter(Q(home_team__uuid=user) | Q(away_team__uuid=user))
+    # if league.write_protected and user != "admin":
+    #     m = m.filter(Q(home_team__uuid=user) | Q(away_team__uuid=user))
 
     m.update(datetime_started=Now())
 
@@ -1244,8 +1244,8 @@ def cancel_start_match(request, league_slug, match_uuid):
         uuid=match_uuid,
     )
 
-    if league.write_protected and user != "admin":
-        m = m.filter(Q(home_team__uuid=user) | Q(away_team__uuid=user))
+    # if league.write_protected and user != "admin":
+    #     m = m.filter(Q(home_team__uuid=user) | Q(away_team__uuid=user))
 
     m.update(datetime_started=None)
 
@@ -1265,9 +1265,10 @@ def add_result(request, league_slug, match_uuid):
 
     if (
             league.write_protected and
-            user != "admin" and
-            not match.home_team.filter(uuid=user).exists() and
-            not match.away_team.filter(uuid=user).exists()
+            user is None
+            # user != "admin" and
+            # not match.home_team.filter(uuid=user).exists() and
+            # not match.away_team.filter(uuid=user).exists()
     ):
         raise PermissionDenied()
 

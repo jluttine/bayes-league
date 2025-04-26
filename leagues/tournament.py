@@ -248,8 +248,6 @@ def greedy(n, m, courts=None, special_player_mode=False):
                 None,
             )
 
-
-
         if special_player_mode:
             # The special player is always a home player in the first match. The
             # special player is also assumed to be the first player on the list.

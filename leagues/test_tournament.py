@@ -51,6 +51,9 @@ def test_greedy():
         ]),
     )
 
+    # FIXME: 10 players without special player didn't work, add a test
+    #(t, a) = tournament.analyse_teaming(tournament.greedy(10, 2, special_player_mode=False))
+
     # Decent solution for 10 players with 2-player teams in special-player mode
     (t, a) = tournament.analyse_teaming(tournament.greedy(10, 2, special_player_mode=True))
     # Special player:

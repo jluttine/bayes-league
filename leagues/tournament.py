@@ -235,6 +235,21 @@ def greedy(n, m, courts=None, special_player_mode=False):
             )
             return
 
+        def clip_to_round_min(x):
+            """Clip values to the n-th smallest value where n is unfilled positions"""
+            # Players who haven't yet played on this round
+            mask = np.sum(np.abs(new_matches), axis=0) == 0
+            # Number of positions not yet filled
+            positions_left = 2*m*k - np.sum(~mask, dtype=int)
+            round_min = np.sort(x[mask])[positions_left-1]
+            return np.clip(
+                x,
+                round_min,
+                None,
+            )
+
+
+
         if special_player_mode:
             # The special player is always a home player in the first match. The
             # special player is also assumed to be the first player on the list.
@@ -299,9 +314,9 @@ def greedy(n, m, courts=None, special_player_mode=False):
                     # 2) Has played the least against the special player
                     against[special_player,:],
                     # 5) Has played the least with the other players in the team
-                    np.sum(together[:,new_matches[game]==side], axis=-1),
+                    np.sum(together[:,new_matches[game]==side], axis=-1, initial=0),
                     # 6) Has played the least against the players in the other team
-                    np.sum(against[:,new_matches[game]==-side], axis=-1),
+                    np.sum(against[:,new_matches[game]==-side], axis=-1, initial=0),
                     # 3) Has played the least with the special player so will be
                     # needed there in the following rounds
                     together[special_player,:],
@@ -318,16 +333,20 @@ def greedy(n, m, courts=None, special_player_mode=False):
             if game == 0 and special_player_mode:
                 # We filled the first match already
                 continue
+            tog = together[:,new_matches[game]==side]
+            ag = against[:,new_matches[game]==-side]
             player = arglexmin(
                 [
                     # 1) Hasn't played on this round yet
                     np.sum(np.abs(new_matches), axis=0),
                     # 2) Has played the least "normal" matches
-                    np.diag(together) - (
-                        np.zeros(n) if not special_player_mode else (
-                            together[special_player,:] +
-                            against[special_player,:]
-                        )
+                    clip_to_round_min(
+                        np.diag(together) - (
+                            np.zeros(n) if not special_player_mode else (
+                                together[special_player,:] +
+                                against[special_player,:]
+                            )
+                        ),
                     ),
                     # 3) Has played the least the other games (with or against
                     # special), so has the most other obligations left
@@ -336,25 +355,27 @@ def greedy(n, m, courts=None, special_player_mode=False):
                         against[special_player,:]
                     ),
                     # 4) Has played the least with the other players in the team
-                    np.sum(together[:,new_matches[game]==side], axis=-1),
+                    (
+                        np.amin(tog, axis=-1, initial=0) +
+                        np.amax(tog, axis=-1, initial=0)
+                    ),
                     # 5) Has played the least against the players in the other
                     # team
-                    np.sum(against[:,new_matches[game]==-side], axis=-1),
-                    # ?) Has played the least on either side of the players in
-                    # the match
+                    (
+                        np.amin(ag, axis=-1, initial=0) +
+                        np.amax(ag, axis=-1, initial=0)
+                    ),
+                    # ?) Has the most completely new match friends. That is,
+                    # hasn't played neither with nor against them.
                     np.sum(
-                        together[:,new_matches[game]!=0] +
-                        against[:,new_matches[game]!=0],
+                        np.clip(
+                            together[:,new_matches[game]!=0] +
+                            against[:,new_matches[game]!=0],
+                            0,
+                            1,
+                        ),
                         axis=-1,
                     ),
-                    # 6) The remaining open positions would be bad for the
-                    # player
-                    -(
-                        np.sum(position_scores_together[(ind+1):,:], axis=0) +
-                        np.sum(position_scores_against[(ind+1):,:], axis=0)
-                    ),
-                    -np.sum(position_scores_together[(ind+1):,:], axis=0),
-                    -np.sum(position_scores_against[(ind+1):,:], axis=0),
                 ]
             )
             update(game, side, player)

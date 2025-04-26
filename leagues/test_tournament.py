@@ -59,6 +59,8 @@ def test_greedy():
     testing.assert_equal(a[0,1:], 2)  # Plays against everyone twice
     # Other players:
     testing.assert_equal(np.diag(t)[1:], 7)  # Plays 7 matches
+    # FIXME: Plays with everyone at least either against or with
+    #testing.assert_array_less(0, a + t)
     np.fill_diagonal(t, 0)
     # Play at most two times with anyone (ideally only once)
     testing.assert_array_less(t, 3)
@@ -77,13 +79,15 @@ def test_greedy():
     testing.assert_equal(a[0,1:], 2)  # Plays against everyone twice
     # Other players:
     testing.assert_equal(np.diag(t)[1:], 11)  # Plays 11 matches
+    # Plays with everyone at least either against or with
+    testing.assert_array_less(0, a + t)
     np.fill_diagonal(t, 0)
     # Play at most two times with anyone (ideally only once)
     testing.assert_array_less(t, 3)
-    # Play with at least 8 different players
-    testing.assert_array_less(7, np.sum(t > 0, axis=0))
-    # Don't play against anyone more than five times (ideally at most twice)
-    testing.assert_array_less(a, 6)
-    # Play against at least 10 different players
+    # Play with at least 9 different players
+    testing.assert_array_less(8, np.sum(t > 0, axis=0))
+    # Don't play against anyone more than four times (ideally at most twice)
+    testing.assert_array_less(a, 5)
+    # Play against at least 10 different players (ideally all 11)
     testing.assert_array_less(9, np.sum(a > 0, axis=0))
     return

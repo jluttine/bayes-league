@@ -428,15 +428,15 @@ class MatchManager(models.Manager):
                             league__write_protected=False,
                             then=models.Value(True),
                         ),
-                        # models.When(
-                        #     home_team__uuid=user,
-                        #     then=models.Value(True),
-                        # ),
-                        # models.When(
-                        #     away_team__uuid=user,
-                        #     then=models.Value(True),
-                        # ),
-                        default=models.Value(True),
+                        models.When(
+                            home_team__uuid=user,
+                            then=models.Value(True),
+                        ),
+                        models.When(
+                            away_team__uuid=user,
+                            then=models.Value(True),
+                        ),
+                        default=models.Value(False),
                     )
                 ).filter(pk=models.OuterRef("pk")).values("can_edit"),
                 output_field=models.BooleanField(),

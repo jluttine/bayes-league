@@ -23,7 +23,7 @@ jobs:
         python-version: '3.12'
     - name: Install dependencies
       run: |
-        pip install django numpy
+        pip install -e .
     - name: Run test suite
       run: |
         python manage.py test

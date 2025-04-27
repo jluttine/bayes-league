@@ -23,7 +23,6 @@ jobs:
         python-version: '3.12'
     - name: Install dependencies
       run: |
-        sudo apt-get install pandoc dvisvgm texlive-full
         pip install django numpy
     - name: Run test suite
       run: |

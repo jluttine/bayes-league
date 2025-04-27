@@ -404,6 +404,17 @@ class MatchManager(models.Manager):
                 output_field=models.BooleanField(),
             )
         )
+        matches_with_user = (
+            None if user is None else
+            None if user == "admin" else
+            models.Subquery(
+                Match.objects.filter(
+                    models.Q(home_team__uuid=user) |
+                    models.Q(away_team__uuid=user)
+                ).values("pk")
+            )
+
+        )
         can_edit = (
             # If no user, league needs to be not write-protected
             models.Subquery(
@@ -425,15 +436,7 @@ class MatchManager(models.Manager):
                 self.annotate(
                     can_edit=models.Case(
                         models.When(
-                            league__write_protected=False,
-                            then=models.Value(True),
-                        ),
-                        models.When(
-                            home_team__uuid=user,
-                            then=models.Value(True),
-                        ),
-                        models.When(
-                            away_team__uuid=user,
+                            pk__in=matches_with_user,
                             then=models.Value(True),
                         ),
                         default=models.Value(False),

@@ -75,6 +75,55 @@
       </div>
     </nav>
 
+    {% for match in user_ongoing %}
+    {% if forloop.first %}
+    <section class="hero">
+      <div class="container content hero-body has-background-light">
+        <h3>Waiting for result</h3>
+        <div class="table-container">
+          <table class="table">
+    {% endif %}
+            <tr>
+              <td class="is-light">
+                <a class="button is-danger" href="{% url 'add_result' league.slug match.uuid %}">
+                  Add result
+                </a>
+              </td>
+              {% include "leagues/cells_match_teams.html" with class="is-light" %}
+            </tr>
+    {% if forloop.last %}
+          </table>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+    {% empty %}
+    {% for match in user_next_up %}
+    {% if forloop.first %}
+    <section class="hero">
+      <div class="container content hero-body has-background-light">
+        <h3>Next up for you</h3>
+        <div class="table-container">
+          <table class="table">
+    {% endif %}
+            <tr>
+              <td class="is-light">
+                <a class="button is-danger" href="{% url 'start_match' league.slug match.uuid %}">
+                  Start
+                </a>
+              </td>
+              {% include "leagues/cells_match_teams.html" with class="is-light" %}
+            </tr>
+    {% if forloop.last %}
+          </table>
+        </div>
+      </div>
+    </section>
+    {% endif %}
+    {% endfor %}
+    {% endfor %}
+
+
     <div class="content container" id="content">
       {% block content %}{% endblock %}
     </div>

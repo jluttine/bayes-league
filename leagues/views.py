@@ -145,6 +145,28 @@ def info(request, league_slug):
     )
 
 
+def get_user_banner_matches(league, user, next_up):
+    matches = league.match_set.with_total_points(user=user, next_up=next_up)
+    user_dict = (
+        {} if user is None or can_administrate(league, user) else
+        dict(
+            user_next_up=matches.filter(
+                can_start=True,
+                can_edit=True,
+            ),
+            user_ongoing=matches.filter(
+                can_edit=True,
+                period_count=0,
+                datetime_started__isnull=False,
+            ),
+        )
+    )
+    return dict(
+        matches=matches,
+        **user_dict,
+    )
+
+
 def view_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
@@ -154,7 +176,6 @@ def view_league(request, league_slug):
         "leagues/view_league.html",
         dict(
             league=league,
-            matches=league.match_set.with_total_points(user=user, next_up=next_up),
             ranking=[
                 Namespace(
                     player=p,
@@ -163,7 +184,8 @@ def view_league(request, league_slug):
                 for p in league.player_set.all().order_by("-score", "name")
             ],
             user_player=user,
-            can_administrate=can_administrate(league, user)
+            can_administrate=can_administrate(league, user),
+            **get_user_banner_matches(league, user, next_up),
         )
     )
 

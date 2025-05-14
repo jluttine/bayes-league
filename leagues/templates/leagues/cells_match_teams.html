@@ -1,0 +1,25 @@
+        <td class="{{ class }}">
+          {% for player in match.home_team.all %}
+          <a href="{% url 'view_player' league.slug player.uuid %}">
+            {% if player == selected_player %}
+            <b>{{ player.name }}</b>
+            {% else %}
+            {{ player.name }}
+            {% endif %}
+          </a><br />
+          {% endfor %}
+        </td>
+        <td class="{{ class }}">
+          -
+        </td>
+        <td class="{{ class }}">
+          {% for player in match.away_team.all %}
+          <a href="{% url 'view_player' league.slug player.uuid %}">
+            {% if player == selected_player %}
+            <b>{{ player.name }}</b>
+            {% else %}
+            {{ player.name }}
+            {% endif %}
+          </a><br />
+          {% endfor %}
+        </td>

@@ -30,6 +30,12 @@ class League(models.Model):
     slug = models.SlugField(max_length=100, unique=True)
     title = models.CharField(max_length=100)
     bonus = models.PositiveIntegerField(default=0)
+    periods = models.PositiveIntegerField(
+        default=3,
+        validators=[
+            MinValueValidator(1),
+        ],
+    )
     points_to_win = models.PositiveIntegerField(default=21)
     regularisation = models.FloatField(
         default=1,
@@ -126,6 +132,14 @@ class Stage(OrderedModel):
         symmetrical=False,
         blank=True,
     )
+    periods = models.PositiveIntegerField(
+        blank=True,
+        null=True,
+        default=None,
+        validators=[
+            MinValueValidator(1),
+        ],
+    )
     points_to_win = models.PositiveIntegerField(
         blank=True,
         null=True,
@@ -150,6 +164,13 @@ class Stage(OrderedModel):
                 name="unique_stage_slugs_in_league",
             ),
         ]
+
+    @property
+    def periods_safe(self):
+        return (
+            self.periods if self.periods is not None else
+            self.league.periods
+        )
 
     def clean(self):
         self.slug = slugify(self.name)

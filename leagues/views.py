@@ -712,7 +712,10 @@ def create_match(request, league_slug, stage_slug=None):
             models.Match,
             models.Period,
             fields=["home_points", "away_points"],
-            extra=3,
+            extra=(
+                stage.periods_safe if stage is not None else
+                league.periods
+            ),
         ),
     )
 
@@ -1313,7 +1316,10 @@ def add_result(request, league_slug, match_uuid):
             models.Match,
             models.Period,
             fields=["home_points", "away_points"],
-            extra=3,
+            extra=(
+                match.stage.periods_safe if match.stage is not None else
+                league.periods
+            ),
         ),
     )
 
@@ -1341,7 +1347,10 @@ def edit_match(request, league_slug, match_uuid):
             models.Match,
             models.Period,
             fields=["home_points", "away_points"],
-            extra=3,
+            extra=(
+                match.stage.periods_safe if match.stage is not None else
+                league.periods
+            ),
         ),
     )
 

@@ -1,3 +1,4 @@
+import os
 import uuid
 import secrets
 
@@ -14,7 +15,15 @@ from . import ranking
 
 
 def create_key():
-    return secrets.token_urlsafe(30)
+    # Read the dictionary of 2048 words (i.e., 11-bits of entropy per word)
+    path = os.path.dirname(__file__)
+    with open(os.path.join(path, "words.txt")) as f:
+        words = f.readlines()
+    # Choose four random words, so 44 bits of entropy. The longest word is 8
+    # characters so this is at most 4x8+3x1=35 characters. Make sure the
+    # relevant fields have proper max_length.
+    key = '-'.join(secrets.choice(words).strip() for i in range(4))
+    return key
 
 
 class League(models.Model):
@@ -40,11 +49,10 @@ class League(models.Model):
         blank=True,
         default=None,
         max_length=50,
-        unique=True,
     )
     player_selection_key = models.CharField(
-        null=False,
-        blank=False,
+        null=True,
+        blank=True,
         default=create_key,
         max_length=50,
     )
@@ -71,6 +79,10 @@ class League(models.Model):
         # Create a key when write-protection is enabled
         if self.write_key is None and self.write_protected:
             self.write_key = create_key()
+
+        # Create a key when write-protection is enabled
+        if self.player_selection_key is None and self.write_protected:
+            self.player_selection_key = create_key()
 
         # NOTE: COMMENT OUT THE CODE BELOW. Let's not change the key every time
         # write-protection is re-enabled because we currently don't have any

@@ -11,7 +11,7 @@ from django import http
 from django.urls import reverse
 from django.forms import inlineformset_factory, formset_factory
 from django.conf import settings
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.core import exceptions
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned
 from django.db import IntegrityError
@@ -1473,6 +1473,38 @@ def delete_match(request, league_slug, match_uuid):
             "leagues/delete_match.html",
             dict(
                 match=match,
+                league=league,
+                user_player=user,
+                can_administrate=True,
+            ),
+        )
+
+
+def delete_all_unplayed_matches(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    if request.method == "POST":
+        # Matches that haven't been started and don't have any results yet.
+        matches = league.match_set.annotate(
+            period_count=Count("period", distinct=True),
+        ).filter(
+            datetime_started=None,
+            period_count=0,
+        )
+        stages = set(filter(None, (m.stage for m in matches)))
+        matches.delete()
+        update_ranking(league, *stages)
+        return http.HttpResponseRedirect(
+            reverse("edit_league", args=[league.slug])
+        )
+    else:
+        return render(
+            request,
+            "leagues/delete_all_unplayed_matches.html",
+            dict(
                 league=league,
                 user_player=user,
                 can_administrate=True,

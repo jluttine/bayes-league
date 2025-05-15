@@ -147,6 +147,11 @@ urlpatterns = [
         name="delete_match",
     ),
     path(
+        "league/<slug:league_slug>/matches/delete/all/",
+        views.delete_all_unplayed_matches,
+        name="delete_all_unplayed_matches",
+    ),
+    path(
         "league/<slug:league_slug>/admin/login/<key>/",
         views.login_admin,
         name="login_admin",

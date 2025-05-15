@@ -146,4 +146,10 @@
 {% endif %}
 {% endfor %}
 
+<h2>Danger zone</h2>
+
+<a class="button is-danger" href="{% url 'delete_all_unplayed_matches' league.slug %}">
+  Delete all unplayed matches
+</a>
+
 {% endblock %}

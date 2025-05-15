@@ -28,7 +28,11 @@
         {% if not hide_time %}
         <td>
           {% if match.period_count == 0 %}
+          {% if match.datetime_started is None %}
+          {{ match.datetime|date:'Y-m-d H:i' }}
+          {% else %}
           {{ match.datetime_started|date:'Y-m-d H:i' }}
+          {% endif %}
           {% elif use_datetime_last_period %}
           {{ match.datetime_last_period|date:'Y-m-d H:i' }}
           {% else %}

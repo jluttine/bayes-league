@@ -36,6 +36,7 @@
         <tr>
           <th>Stage</th>
           <th>Includes</th>
+          <th>Periods</th>
           <th>Bonus</th>
           <th>Period points</th>
           <th>On dashboard</th>
@@ -55,6 +56,13 @@
               <li>{{ s.name }}</li>
               {% endfor %}
             </ul>
+          </td>
+          <td>
+            {% if stage.periods != None %}
+            {{ stage.periods }}
+            {% else %}
+            {{ stage.league.periods }} (league default)
+            {% endif %}
           </td>
           <td>
             {% if stage.bonus != None %}

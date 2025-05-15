@@ -20,7 +20,7 @@ urlpatterns = [
         name="view_league",
     ),
     path(
-        "league/<slug:league_slug>/edit/",
+        "league/<slug:league_slug>/admin/settings/",
         views.edit_league,
         name="edit_league",
     ),
@@ -147,7 +147,7 @@ urlpatterns = [
         name="delete_match",
     ),
     path(
-        "league/<slug:league_slug>/login/<key>/",
+        "league/<slug:league_slug>/admin/login/<key>/",
         views.login_admin,
         name="login_admin",
     ),

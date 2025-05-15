@@ -367,6 +367,9 @@ class Court(OrderedModel):
             ),
         ]
 
+    def __str__(self):
+        return self.name
+
 
 class MatchManager(models.Manager):
 

@@ -82,7 +82,7 @@
           </a>
           {% endif %}
           {% else %}
-          {% if match.can_edit %}
+          {% if not hide_add_result and match.can_edit  %}
           <a class="button is-primary" href="{% url 'add_result' league.slug match.uuid %}">
             Add result
           </a>

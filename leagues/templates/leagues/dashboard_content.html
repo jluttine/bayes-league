@@ -14,7 +14,7 @@
     {% endif %}
     <h2>Ongoing</h2>
     {% if ongoing_matches %}
-    {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_bonus=True hide_info=True datetime_title="Start time" result_title=" " %}
+    {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_bonus=True hide_info=True hide_add_result=True datetime_title="Start time" result_title=" " %}
     {% else %}
     No matches at the moment
     {% endif %}

@@ -28,6 +28,8 @@
   <a class="button is-primary" href="{% url 'create_stage' league.slug %}">Add stage</a>
 </h2>
 
+{% for prev, stage, next in stages_triple %}
+{% if forloop.first %}
 <form action="{% url 'edit_league' league.slug %}" method="post">
   {% csrf_token %}
   <div class="table-container">
@@ -45,7 +47,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for prev, stage, next in stages_triple %}
+{% endif %}
         <tr>
           <td>
             {{ stage.name }}
@@ -94,17 +96,21 @@
           <td>
             <a href="{% url 'edit_stage' league.slug stage.slug %}">Edit</a>
           </td>
-          {% endfor %}
         </tr>
+{% if forloop.last %}
       </tbody>
     </table>
   </div>
 </form>
+{% endif %}
+{% endfor %}
 
 <h2>Courts
   <a class="button is-primary" href="{% url 'create_court' league.slug %}">Add court</a>
 </h2>
 
+{% for prev, court, next in courts_triple %}
+{% if forloop.first %}
 <form action="{% url 'edit_league' league.slug %}" method="post">
   {% csrf_token %}
   <div class="table-container">
@@ -117,7 +123,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for prev, court, next in courts_triple %}
+{% endif %}
         <tr>
           <td>
             {{ court.name }}
@@ -131,11 +137,13 @@
           <td>
             <a href="{% url 'edit_court' league.slug court.pk %}">Edit</a>
           </td>
-          {% endfor %}
         </tr>
+{% if forloop.last %}
       </tbody>
     </table>
   </div>
 </form>
+{% endif %}
+{% endfor %}
 
 {% endblock %}

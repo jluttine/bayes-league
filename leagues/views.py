@@ -789,6 +789,9 @@ def create_match(request, league_slug, stage_slug=None):
         request,
         forms.MatchForm,
         template="leagues/edit_match.html",
+        # FIXME: If the match has no result, there would be no need to update
+        # the ranking, just add players with None rankings if they aren't yet
+        # included in the ranking.
         redirect=lambda stage=None, **_: update_ranking(league, stage),
         context=dict(
             league=league,
@@ -1151,6 +1154,12 @@ def create_multiple_matches(request, league_slug):
                     f.instance.stage = stage
                     if f.is_valid():
                         instance = f.save()
+                        # FIXME: We wouldn't need to completely recalculate the
+                        # ranking, just adding missing players with None ranking
+                        # suffices.
+                        update_ranking(league, stage)
+                    else:
+                        print(f.errors)
             # Redirect to the stage page
             return http.HttpResponseRedirect(
                 reverse("view_league", args=[league.slug])

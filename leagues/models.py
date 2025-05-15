@@ -585,6 +585,8 @@ class Match(models.Model):
     datetime = models.DateTimeField(
         # NOTE: Don't use auto_now_add so the datetime can be edited
         default=timezone.now,
+        # Allow forms to ignore this field
+        blank=True,
     )
     # Field used to mark a match has been started, so it's ongoing until it gets
     # a result.

@@ -79,6 +79,23 @@ urlpatterns = [
         views.view_stage,
         name="view_stage",
     ),
+
+    path(
+        "league/<slug:league_slug>/courts/add/",
+        views.create_court,
+        name="create_court",
+    ),
+    path(
+        "league/<slug:league_slug>/courts/edit/<court_pk>/",
+        views.edit_court,
+        name="edit_court",
+    ),
+    path(
+        "league/<slug:league_slug>/courts/delete/<court_pk>/",
+        views.delete_court,
+        name="delete_court",
+    ),
+
     path(
         "league/<slug:league_slug>/matches/add/",
         views.create_match,

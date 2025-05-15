@@ -1,0 +1,22 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Edit court</h1>
+
+<form action="{% url 'edit_court' league.slug court.pk %}" method="post">
+    {% csrf_token %}
+  <div class="block">
+    {{ form.as_p }}
+    {{ formset.as_p }}
+  </div>
+  <div class="block">
+  <a class="button is-danger" href="{% url 'delete_court' league.slug court.pk %}">
+    Delete
+  </a>
+  <a class="button is-primary is-light" href="{% url 'edit_league' league.slug %}">
+    Cancel
+  </a>
+    <input class="button is-primary" type="submit" value="Save">
+  </div>
+</form>
+{% endblock %}

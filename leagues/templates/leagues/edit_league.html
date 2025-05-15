@@ -78,13 +78,50 @@
             {% endif %}
           </td>
           <td>
-            <input class="button is-primary" type="submit" name="move {{ stage.slug }} top" value="Top" />
-            <input class="button is-primary" type="submit" name="move {{ stage.slug }} above {{ prev.slug }}" value="Up" />
-            <input class="button is-primary" type="submit" name="move {{ stage.slug }} below {{ next.slug }}" value="Down" />
-            <input class="button is-primary" type="submit" name="move {{ stage.slug }} bottom" value="Bottom" />
+            <input class="button is-primary" type="submit" name="move stage {{ stage.slug }} top" value="Top" />
+            <input class="button is-primary" type="submit" name="move stage {{ stage.slug }} above {{ prev.slug }}" value="Up" />
+            <input class="button is-primary" type="submit" name="move stage {{ stage.slug }} below {{ next.slug }}" value="Down" />
+            <input class="button is-primary" type="submit" name="move stage {{ stage.slug }} bottom" value="Bottom" />
           </td>
           <td>
             <a href="{% url 'edit_stage' league.slug stage.slug %}">Edit</a>
+          </td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</form>
+
+<h2>Courts
+  <a class="button is-primary" href="{% url 'create_court' league.slug %}">Add court</a>
+</h2>
+
+<form action="{% url 'edit_league' league.slug %}" method="post">
+  {% csrf_token %}
+  <div class="table-container">
+    <table class="table is-striped" id="court-table">
+      <thead>
+        <tr>
+          <th>Court</th>
+          <th>Move</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for prev, court, next in courts_triple %}
+        <tr>
+          <td>
+            {{ court.name }}
+          </td>
+          <td>
+            <input class="button is-primary" type="submit" name="move court {{ court.pk }} top" value="Top" />
+            <input class="button is-primary" type="submit" name="move court {{ court.pk }} above {{ prev.pk }}" value="Up" />
+            <input class="button is-primary" type="submit" name="move court {{ court.pk }} below {{ next.pk }}" value="Down" />
+            <input class="button is-primary" type="submit" name="move court {{ court.pk }} bottom" value="Bottom" />
+          </td>
+          <td>
+            <a href="{% url 'edit_court' league.slug court.pk %}">Edit</a>
           </td>
           {% endfor %}
         </tr>

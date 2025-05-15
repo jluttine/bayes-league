@@ -1,0 +1,22 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Delete court?</h1>
+
+<p>
+Are you sure you want to delete the following court permanently?
+</p>
+
+<p>
+Court: {{ court.name }}
+</p>
+
+<form action="{% url 'delete_court' league.slug court.pk %}" method="post">
+    {% csrf_token %}
+    <input class="button is-danger" type="submit" value="Yes, delete">
+    <a class="button is-primary" href="{% url 'edit_court' league.slug court.pk %}">
+        No, cancel
+    </a>
+</form>
+
+{% endblock %}

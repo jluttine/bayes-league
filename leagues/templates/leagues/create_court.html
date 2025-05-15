@@ -1,0 +1,12 @@
+{% extends "leagues/base.html" %}
+
+{% block content %}
+<h1>Add court</h1>
+
+<form action="{% url 'create_court' league.slug %}" method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    {{ formset.as_p }}
+    <input class="button is-primary" type="submit" value="Save">
+</form>
+{% endblock %}

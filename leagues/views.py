@@ -215,44 +215,48 @@ def edit_league(request, league_slug):
     if not can_administrate(league, user):
         raise PermissionDenied()
 
-    def move_stage(post):
+    def move(post, **movable_models):
         for key in post:
-            m = re.fullmatch(
-                r"^move (?P<slug>.*) (?P<action>(top|above|below|bottom)) ?(?P<arg>.+)?$",
-                key,
-            )
-            if m is None:
-                continue
-            d = m.groupdict()
-            action = d["action"]
-            stage = get_object_or_404(
-                models.Stage,
-                league=league,
-                slug=d["slug"]
-            )
-            arg = d.get("arg")
-            other = (
-                None if arg is None else
-                get_object_or_404(
-                    models.Stage,
-                    league=league,
-                    slug=arg,
+            for (model_name, (model, id_name)) in movable_models.items():
+                m = re.fullmatch(
+                    r"^move " + model_name + r" (?P<id>.*) (?P<action>(top|above|below|bottom)) ?(?P<arg>.+)?$",
+                    key,
                 )
-            )
-            if action == "top":
-                stage.bottom()
-            elif action == "bottom":
-                stage.top()
-            elif action == "above" and other is not None:
-                stage.below(other)
-            elif action == "below" and other is not None:
-                stage.above(other)
+                if m is None:
+                    continue
+                d = m.groupdict()
+                action = d["action"]
+                obj = get_object_or_404(
+                    model,
+                    league=league,
+                    **{id_name: d["id"]},
+                )
+                arg = d.get("arg")
+                other = (
+                    None if arg is None else
+                    get_object_or_404(
+                        model,
+                        league=league,
+                        **{id_name: arg},
+                    )
+                )
+                if action == "top":
+                    obj.bottom()
+                elif action == "bottom":
+                    obj.top()
+                elif action == "above" and other is not None:
+                    obj.below(other)
+                elif action == "below" and other is not None:
+                    obj.above(other)
         return http.HttpResponseRedirect(
             reverse("edit_league", args=[league.slug])
         )
 
     stages = [None] + list(league.stage_set.all()) + [None]
     stages_triple = list(zip(stages[:-2], stages[1:-1], stages[2:]))
+
+    courts = [None] + list(league.court_set.all()) + [None]
+    courts_triple = list(zip(courts[:-2], courts[1:-1], courts[2:]))
 
     return model_form_view(
         request,
@@ -261,6 +265,7 @@ def edit_league(request, league_slug):
         context=dict(
             league=league,
             stages_triple=stages_triple,
+            courts_triple=courts_triple,
             login_url=request.build_absolute_uri(
                 reverse("login_admin", args=[league.slug, league.write_key])
             ),
@@ -292,7 +297,11 @@ def edit_league(request, league_slug):
         ),
         conditional=lambda post, process: (
             process() if "title" in post else
-            move_stage(post)
+            move(
+                post,
+                stage=(models.Stage, "slug"),
+                court=(models.Court, "pk"),
+            )
         )
     )
 
@@ -682,6 +691,86 @@ def view_stage(request, league_slug, stage_slug):
             can_administrate=can_administrate(stage.league, user),
         )
     )
+
+
+def create_court(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    court = models.Court(league=league)
+    return model_form_view(
+        request,
+        forms.CourtForm,
+        template="leagues/create_court.html",
+        redirect=lambda **_: reverse(
+            "edit_league",
+            args=[league_slug],
+        ),
+        context=dict(
+            league=league,
+            court=court,
+            user_player=user,
+            can_administrate=True,
+        ),
+        instance=court,
+    )
+
+
+def edit_court(request, league_slug, court_pk):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    court = get_object_or_404(models.Court, league=league, pk=court_pk)
+    return model_form_view(
+        request,
+        forms.CourtForm,
+        template="leagues/edit_court.html",
+        redirect=lambda **_: reverse(
+            "edit_league",
+            args=[league.slug],
+        ),
+        context=dict(
+            league=court.league,
+            court=court,
+            user_player=user,
+            can_administrate=True,
+        ),
+        instance=court,
+    )
+
+
+def delete_court(request, league_slug, court_pk):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    court = get_object_or_404(models.Court, league=league, pk=court_pk)
+
+    if request.method == "POST":
+        court.delete()
+        return http.HttpResponseRedirect(
+            reverse(
+                "edit_league",
+                args=[league.slug],
+            ),
+        )
+    else:
+        return render(
+            request,
+            "leagues/delete_court.html",
+            dict(
+                court=court,
+                league=league,
+                user_player=user,
+                can_administrate=True,
+            ),
+        )
 
 
 def create_match(request, league_slug, stage_slug=None):

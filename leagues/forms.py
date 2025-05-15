@@ -83,6 +83,17 @@ class StageForm(ModelForm):
         return
 
 
+class CourtForm(ModelForm):
+
+    class Meta:
+        model = models.Court
+        fields = [
+            # FIXME: Because league is excluded, unique together constraint
+            # isn't validated and integrity error is raised instead.
+            "name",
+        ]
+
+
 class ResultForm(ModelForm):
 
     last_updated_constraint = DateTimeField(

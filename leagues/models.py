@@ -340,6 +340,34 @@ def annotate_matches_with_periods(matches):
     )
 
 
+class Court(OrderedModel):
+    league = models.ForeignKey(
+        League,
+        on_delete=models.CASCADE,
+        # Don't edit the league because otherwise existing courts might include
+        # matches from different leagues
+        editable=False,
+    )
+    name = models.CharField(
+        max_length=50,
+        blank=False,
+        null=False,
+    )
+
+    class Meta:
+        # The ordering is defined in OrderedModel base class
+        ordering = [models.F("order").desc(nulls_first=True)]
+        constraints = [
+            # FIXME: Because league is non-editable, this constraint cannot be
+            # checked in model form validation. So, integrity error is raised if
+            # this constraint is broken.
+            models.UniqueConstraint(
+                fields=["league", "name"],
+                name="unique_court_names_in_league",
+            ),
+        ]
+
+
 class MatchManager(models.Manager):
 
     def with_players(self, players):
@@ -529,6 +557,13 @@ class Match(models.Model):
     )
     stage = models.ForeignKey(
         Stage,
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True,
+        default=None,
+    )
+    court = models.ForeignKey(
+        Court,
         on_delete=models.SET_NULL,
         blank=True,
         null=True,

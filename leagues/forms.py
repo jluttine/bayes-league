@@ -155,6 +155,7 @@ class MatchForm(ModelForm):
             del self.fields["stage"]
         else:
             self.fields["stage"].queryset = stages
+            self.fields["stage"].required = True
 
         # Don't show scheduled time if the match has already been started or
         # finished
@@ -231,6 +232,10 @@ class ChooseStageForm(ModelForm):
         self.fields["stage"].queryset = self.fields["stage"].queryset.filter(
             league=league
         )
+        if not self.fields["stage"].queryset.exists():
+            del self.fields["stage"]
+        else:
+            self.fields["stage"].required = True
         return
 
 

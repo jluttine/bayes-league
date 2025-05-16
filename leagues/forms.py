@@ -209,12 +209,18 @@ class MatchForm(ModelForm):
         league = self.instance.league
         home = self.cleaned_data.get("home_team")
         away = self.cleaned_data.get("away_team")
+        if home is None:
+            raise ValidationError("Choose at least one player in home team")
+        if away is None:
+            raise ValidationError("Choose at least one player in away team")
         if any(p.league != league for p in home):
             raise ValidationError(f"All home team players must be from league: {league.title}")
         if any(p.league != league for p in away):
             raise ValidationError(f"All away team players must be from league: {league.title}")
         homeset = set(p.uuid for p in home)
         awayset = set(p.uuid for p in away)
+        if len(homeset) != len(awayset):
+            raise ValidationError("Teams must have the same number of players")
         if not homeset.isdisjoint(awayset):
             raise ValidationError("Players are allowed to play only in one of the teams, not both")
         return

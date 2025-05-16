@@ -295,7 +295,7 @@ class Player(models.Model):
         )
 
     def __str__(self):
-        return f"{self.name} ({self.league.title})"
+        return f"{self.name}"
 
 
 def annotate_matches_with_period_count(matches):

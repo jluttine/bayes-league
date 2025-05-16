@@ -1,4 +1,5 @@
 import functools
+from itertools import cycle, chain, repeat, count
 import logging
 import datetime
 import time
@@ -868,7 +869,7 @@ def find_r2_cost_lowerbound(R2_masked):
     return cost
 
 
-def create_even_matches(players):
+def create_even_matches(players, extra_matches=[], odd_player_plays=True):
     # Sort players based on ranking
     players = sorted(
         players,
@@ -892,6 +893,11 @@ def create_even_matches(players):
             for ap in m.away_players:
                 j = ijs[ap.id]
                 C[i,j] += 1
+
+    for (hp, ap) in extra_matches:
+        i = ijs[hp.id]
+        j = ijs[ap.id]
+        C[i,j] += 1
 
     # We don't care about home vs away, so make the matrix symmetric
     C = C + C.T
@@ -923,18 +929,24 @@ def create_even_matches(players):
                 np.sum(C, axis=0),
             )
         )[0]
-        opponent = np.lexsort(
-            (
-                # Secondary key: ranking difference
-                R2[odd_player],
-                # Primary key: match counts
-                C[odd_player],
-                # Pre key: not the odd player itself
-                np.arange(N) == odd_player,
-            )
-        )[0]
-        odd_matches = [(opponent, odd_player)]
-        remaining_players = np.delete(np.arange(N), opponent)
+        if odd_player_plays:
+            # The odd player plays twice
+            opponent = np.lexsort(
+                (
+                    # Secondary key: ranking difference
+                    R2[odd_player],
+                    # Primary key: match counts
+                    C[odd_player],
+                    # Pre key: not the odd player itself
+                    np.arange(N) == odd_player,
+                )
+            )[0]
+            odd_matches = [(opponent, odd_player)]
+            remaining_players = np.delete(np.arange(N), opponent)
+        else:
+            # The odd player doesn't play at all
+            odd_matches = []
+            remaining_players = np.delete(np.arange(N), odd_player)
 
     # Find the optimal by traversing all possible solutions recursively.
     # Criteria:
@@ -1100,8 +1112,22 @@ def create_multiple_matches(request, league_slug):
 
             if form.is_valid():
                 players = form.cleaned_data["players"]
+                m = len(players)
+                courts = form.cleaned_data.get("courts", [None])
+                n = len(courts)
+                duration = form.cleaned_data["duration_in_minutes"]
+                datetime_start = form.cleaned_data["datetime"]
+                rounds = form.cleaned_data["rounds"]
 
-                matches = create_even_matches(players)
+                matches = []
+                for i in range(rounds):
+                    matches = matches + create_even_matches(
+                        players,
+                        extra_matches=matches,
+                        # At rounds 0, 2, 4, 6, ... the odd player plays twice.
+                        odd_player_plays=((i % 2) == 0),
+                    )
+
 
                 DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
                 formset = DummyMatchFormset(
@@ -1109,8 +1135,19 @@ def create_multiple_matches(request, league_slug):
                         dict(
                             home_team=[p1],
                             away_team=[p2],
+                            court=court,
+                            datetime=datetime_start + datetime.timedelta(minutes=offset),
                         )
-                        for (p1, p2) in matches
+                        for (offset, court, (p1, p2)) in zip(
+                                chain.from_iterable(
+                                    map(
+                                        lambda d: repeat(d, n),
+                                        count(0, duration),
+                                    ),
+                                ),
+                                cycle(courts),
+                                matches,
+                        )
                     ],
                 )
                 # Use the algorithm to create matches

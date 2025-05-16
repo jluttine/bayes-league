@@ -26,6 +26,8 @@ The following matches would be created. Please confirm below or modify the setti
   <table class="table is-striped">
     <thead>
       <tr>
+        <th>Datetime</th>
+        <th>Court</th>
         <th>Home team</th>
         <th></th>
         <th>Away team</th>
@@ -34,6 +36,12 @@ The following matches would be created. Please confirm below or modify the setti
     <tbody>
       {% for f in formset %}
       <tr>
+        <td>
+          {{ f.datetime.as_hidden }}{{ f.datetime.initial|date:'Y-m-d H:i' }}
+        </td>
+        <td>
+          {{ f.court.as_hidden }}{{ f.court.initial|default_if_none:'-' }}
+        </td>
         <td>
           {{ f.league.as_hidden }}
           {{ f.stage.as_hidden }}

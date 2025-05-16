@@ -244,28 +244,72 @@ class DummyMatchForm(ModelForm):
 
     class Meta:
         model = models.Match
-        fields = ["datetime", "home_team", "away_team"]
+        fields = ["datetime", "court", "home_team", "away_team"]
 
     clean = MatchForm.clean
 
 
 class BulkMatchForm(Form):
     players = PlayerMultipleChoiceField(models.Player.objects.all())
-    # datetime = DateTimeField(
-    #     initial=lambda: (
-    #         timezone.now()
-    #         .astimezone(timezone.get_default_timezone())
-    #         .strftime("%Y-%m-%d %H:%M")
-    #     ),
-    #     input_formats=["%Y-%m-%d %H:%M"],
-    # )
+    courts = ModelMultipleChoiceField(
+        models.Court.objects.all()
+    )
+    duration_in_minutes = IntegerField(
+        min_value=1,
+        max_value=365*24*60,
+        initial=1,
+    )
+    datetime = DateTimeField(
+        initial=lambda: (
+            timezone.now()
+            .astimezone(timezone.get_default_timezone())
+            .strftime("%Y-%m-%d %H:%M")
+        ),
+        input_formats=["%Y-%m-%d %H:%M"],
+    )
+    rounds = IntegerField(
+        min_value=1,
+        max_value=10,
+        initial=1,
+    )
 
     def __init__(self, league, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["players"].queryset = models.Player.objects.filter(league=league)
         self.fields["players"].initial = self.fields["players"].queryset
-        #self.fields["datetime"].initial = timezone.now()
+        self.fields["players"].required = True
+
+        courts = models.Court.objects.filter(league=league)
+        if courts.exists():
+            self.fields["courts"].queryset = courts
+            self.fields["courts"].initial = courts
+            self.fields["courts"].required = True
+        else:
+            del self.fields["courts"]
+
+        self.fields["datetime"].initial = timezone.now()
         return
+
+    def clean_players(self):
+        ps = self.cleaned_data["players"]
+        if len(ps) < 2:
+            raise ValidationError(
+                "At least two players must be selected"
+            )
+        return ps
+
+    def clean(self):
+        try:
+            rounds = self.cleaned_data["rounds"]
+            players = len(self.cleaned_data["players"])
+        except KeyError:
+            pass
+        else:
+            if (players * rounds) % 2 != 0:
+                raise ValidationError(
+                    "Either the number of players or rounds must be even"
+                )
+        return self.cleaned_data
 
 
 class TournamentForm(Form):

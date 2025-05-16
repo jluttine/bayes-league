@@ -1106,69 +1106,11 @@ def create_multiple_matches(request, league_slug):
 
     if request.method == "POST":
 
-        if "generate" in request.POST:
+        # NOTE: If we are coming here from the confirmation phase, the request
+        # contains data from the hidden fields for the first form.
+        form = forms.BulkMatchForm(league, request.POST)
 
-            form = forms.BulkMatchForm(league, request.POST)
-
-            if form.is_valid():
-                players = form.cleaned_data["players"]
-                m = len(players)
-                courts = form.cleaned_data.get("courts", [None])
-                n = len(courts)
-                duration = form.cleaned_data["duration_in_minutes"]
-                datetime_start = form.cleaned_data["datetime"]
-                rounds = form.cleaned_data["rounds"]
-
-                matches = []
-                for i in range(rounds):
-                    matches = matches + create_even_matches(
-                        players,
-                        extra_matches=matches,
-                        # At rounds 0, 2, 4, 6, ... the odd player plays twice.
-                        odd_player_plays=((i % 2) == 0),
-                    )
-
-
-                DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
-                formset = DummyMatchFormset(
-                    initial=[
-                        dict(
-                            home_team=[p1],
-                            away_team=[p2],
-                            court=court,
-                            datetime=datetime_start + datetime.timedelta(minutes=offset),
-                        )
-                        for (offset, court, (p1, p2)) in zip(
-                                chain.from_iterable(
-                                    map(
-                                        lambda d: repeat(d, n),
-                                        count(0, duration),
-                                    ),
-                                ),
-                                cycle(courts),
-                                matches,
-                        )
-                    ],
-                )
-                # Use the algorithm to create matches
-                #
-                # Show a page that lists the games and asks for confirmation
-                # matches = [
-                #     (p1, p2)
-                #     for (p1, p2) in zip(players[0::2], players[1::2])
-                # ]
-                return render(
-                    request,
-                    "leagues/create_multiple_matches.html",
-                    dict(
-                        form=form,
-                        stage_form=forms.ChooseStageForm(league),
-                        league=league,
-                        formset=formset,
-                        user_player=user,
-                        can_administrate=True,
-                    )
-                )
+        if not form.is_valid():
             return render(
                 request,
                 "leagues/create_multiple_matches.html",
@@ -1180,29 +1122,122 @@ def create_multiple_matches(request, league_slug):
                 )
             )
 
+        if "generate" in request.POST:
+
+            players = form.cleaned_data["players"]
+            m = len(players)
+            courts = form.cleaned_data.get("courts", [None])
+            n = len(courts)
+            duration = form.cleaned_data["duration_in_minutes"]
+            datetime_start = form.cleaned_data["datetime"]
+            rounds = form.cleaned_data["rounds"]
+
+            if form.cleaned_data["autofill_teams"]:
+                matches = []
+                for i in range(rounds):
+                    matches = matches + create_even_matches(
+                        players,
+                        extra_matches=matches,
+                        # At rounds 0, 2, 4, 6, ... the odd player plays twice.
+                        odd_player_plays=((i % 2) == 0),
+                    )
+            else:
+                matches = ((rounds * m) // 2) * [(None, None)]
+
+
+            DummyMatchFormset = formset_factory(
+                forms.create_simple_match_form(
+                    players=players,
+                ),
+                extra=0,
+            )
+            formset = DummyMatchFormset(
+                initial=[
+                    dict(
+                        home_team=[p1],
+                        away_team=[p2],
+                        court=court,
+                        datetime=datetime_start + datetime.timedelta(minutes=offset),
+                    )
+                    for (offset, court, (p1, p2)) in zip(
+                            chain.from_iterable(
+                                map(
+                                    lambda d: repeat(d, n),
+                                    count(0, duration),
+                                ),
+                            ),
+                            cycle(courts),
+                            matches,
+                    )
+                ],
+            )
+            # Use the algorithm to create matches
+            #
+            # Show a page that lists the games and asks for confirmation
+            # matches = [
+            #     (p1, p2)
+            #     for (p1, p2) in zip(players[0::2], players[1::2])
+            # ]
+            return render(
+                request,
+                "leagues/create_multiple_matches.html",
+                dict(
+                    form=form,
+                    stage_form=forms.ChooseStageForm(league),
+                    league=league,
+                    formset=formset,
+                    user_player=user,
+                    can_administrate=True,
+                )
+            )
+
         elif "confirm" in request.POST:
-            DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
+            DummyMatchFormset = formset_factory(
+                forms.create_simple_match_form(
+                    players=form.cleaned_data["players"],
+                ),
+                extra=0,
+            )
             stage_form = forms.ChooseStageForm(league, request.POST)
             formset = DummyMatchFormset(request.POST, initial=[])
+            for f in formset:
+                f.instance.league = league
             if stage_form.is_valid():
                 stage = stage_form.cleaned_data["stage"]
+                valid = True
                 for f in formset:
-                    f.instance.league = league
                     f.instance.stage = stage
-                    if f.is_valid():
+                    if not f.is_valid():
+                        valid = False
+                if valid:
+                    for f in formset:
                         instance = f.save()
-                        # FIXME: We wouldn't need to completely recalculate the
-                        # ranking, just adding missing players with None ranking
-                        # suffices.
-                        update_ranking(league, stage)
-                    else:
-                        print(f.errors)
-            # Redirect to the stage page
-            return http.HttpResponseRedirect(
-                reverse("view_league", args=[league.slug])
+
+                    # FIXME: We wouldn't need to completely recalculate the
+                    # ranking, just adding missing players with None ranking
+                    # suffices.
+                    update_ranking(league, stage)
+                    # Redirect to the league page
+                    return http.HttpResponseRedirect(
+                        reverse("view_league", args=[league.slug])
+                    )
+
+            return render(
+                request,
+                "leagues/create_multiple_matches.html",
+                dict(
+                    form=form,
+                    stage_form=stage_form,
+                    league=league,
+                    formset=formset,
+                    user_player=user,
+                    can_administrate=True,
+                )
             )
+
         else:
             raise RuntimeError("Unknown form")
+
 
     else:
         form = forms.BulkMatchForm(league)
@@ -1318,7 +1353,12 @@ def generate_tournament(request, league_slug):
             )
 
         elif "confirm" in request.POST:
-            DummyMatchFormset = formset_factory(forms.DummyMatchForm, extra=0)
+            DummyMatchFormset = formset_factory(
+                forms.create_simple_match_form(
+                    players=models.Player.objects.filter(league=league),
+                ),
+                extra=0,
+            )
             stage_form = forms.ChooseStageForm(league, request.POST)
             formset = DummyMatchFormset(request.POST, initial=[])
             if stage_form.is_valid():

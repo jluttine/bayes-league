@@ -20,6 +20,12 @@ The following matches would be created. Please confirm below or modify the setti
 
 <form action="{% url 'create_multiple_matches' league.slug %}" method="post">
 {% csrf_token %}
+
+{# Hide the upper form here so its values can be accessed in the view #}
+{% for field in form %}
+{{ field.as_hidden }}
+{% endfor %}
+
 {{ formset.management_form }}
 
 <div class="table-container">
@@ -37,27 +43,38 @@ The following matches would be created. Please confirm below or modify the setti
       {% for f in formset %}
       <tr>
         <td>
-          {{ f.datetime.as_hidden }}{{ f.datetime.initial|date:'Y-m-d H:i' }}
+          {{ f.non_field_errors }}
+          {{ f.datetime }}
         </td>
         <td>
-          {{ f.court.as_hidden }}{{ f.court.initial|default_if_none:'-' }}
+          {{ f.court }}
         </td>
         <td>
           {{ f.league.as_hidden }}
           {{ f.stage.as_hidden }}
+          {% if form.autofill_teams.value %}
           {{ f.home_team.as_hidden }}
           {% for p in f.home_team.initial %}
           {{ p.name }} <br />
           {% endfor %}
+          {% else %}
+          {{ f.home_team.errors }}
+          {{ f.home_team }}
+          {% endif %}
         </td>
         <td>
           -
         </td>
         <td>
+          {% if form.autofill_teams.value %}
           {{ f.away_team.as_hidden }}
           {% for p in f.away_team.initial %}
           {{ p.name }} <br />
           {% endfor %}
+          {% else %}
+          {{ f.away_team.errors }}
+          {{ f.away_team }}
+          {% endif %}
         </td>
       </tr>
       {% endfor %}

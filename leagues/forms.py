@@ -239,14 +239,27 @@ class ChooseStageForm(ModelForm):
         return
 
 
-class DummyMatchForm(ModelForm):
-    """A simple read-only inline form for a single match used in bulk match creation"""
+def create_simple_match_form(players):
 
-    class Meta:
-        model = models.Match
-        fields = ["datetime", "court", "home_team", "away_team"]
+    class DummyMatchForm(ModelForm):
+        """A simple read-only inline form for a single match used in bulk match creation"""
 
-    clean = MatchForm.clean
+        class Meta:
+            model = models.Match
+            fields = ["datetime", "court", "home_team", "away_team"]
+
+        clean = MatchForm.clean
+
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+            self.fields["home_team"].queryset = players
+            self.fields["away_team"].queryset = players
+            self.fields["home_team"].required = True
+            self.fields["away_team"].required = True
+            return
+
+    return DummyMatchForm
 
 
 class BulkMatchForm(Form):
@@ -271,6 +284,10 @@ class BulkMatchForm(Form):
         min_value=1,
         max_value=10,
         initial=1,
+    )
+    autofill_teams = BooleanField(
+        initial=True,
+        required=False,
     )
 
     def __init__(self, league, *args, **kwargs):

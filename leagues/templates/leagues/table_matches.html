@@ -2,8 +2,9 @@
   <table class="table is-striped">
     <thead>
       <tr>
-        {% if show_counter %}<th></th>{% endif %}
+        {% if show_counter and not show_court %}<th></th>{% endif %}
         {% if not hide_time %}<th>{{ datetime_title|default:"Time" }}</th>{% endif %}
+        {% if show_court %}<th>Court</th>{% endif %}
         <th>Home team</th>
         <th></th>
         <th>Away team</th>
@@ -20,7 +21,7 @@
 
       {% for match in matches %}
       <tr>
-        {% if show_counter %}
+        {% if show_counter and not show_court %}
         <td>
           {{ forloop.revcounter }}.
         </td>
@@ -40,6 +41,9 @@
           {{ match.datetime_last_period|date:'Y-m-d H:i' }}
           {% endif %}
         </td>
+        {% endif %}
+        {% if show_court %}
+        <td>{{ match.court|default_if_none:'-' }}</td>
         {% endif %}
         <td>
           {% for player in match.home_team.all %}

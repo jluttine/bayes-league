@@ -1,4 +1,5 @@
 {% regroup matches by stage as stage_groups %}
+{% with show_court=league.court_set.exists %}
 {% for stage in stage_groups %}
 {% if stage.grouper.name != None %}
 <h3><a href="{% url 'view_stage' stage.grouper.league.slug stage.grouper.slug %}">{{ stage.grouper }}</a></h3>
@@ -14,5 +15,6 @@ Bonus points: {{ league.bonus }} (league default)
 {% else %}
 {% endif %}
 {% endif %}
-{% include 'leagues/table_matches.html' with matches=stage.list %}
+{% include 'leagues/table_matches.html' with matches=stage.list show_court=show_court %}
 {% endfor %}
+{% endwith %}

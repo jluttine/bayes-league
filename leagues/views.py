@@ -1171,6 +1171,7 @@ def create_multiple_matches(request, league_slug):
             DummyMatchFormset = formset_factory(
                 forms.create_simple_match_form(
                     players=players,
+                    league=league,
                 ),
                 extra=0,
             )
@@ -1218,6 +1219,7 @@ def create_multiple_matches(request, league_slug):
             DummyMatchFormset = formset_factory(
                 forms.create_simple_match_form(
                     players=form.cleaned_data["players"],
+                    league=league,
                 ),
                 extra=0,
             )
@@ -1379,6 +1381,7 @@ def generate_tournament(request, league_slug):
             DummyMatchFormset = formset_factory(
                 forms.create_simple_match_form(
                     players=models.Player.objects.filter(league=league),
+                    league=league,
                 ),
                 extra=0,
             )

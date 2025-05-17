@@ -245,7 +245,7 @@ class ChooseStageForm(ModelForm):
         return
 
 
-def create_simple_match_form(players):
+def create_simple_match_form(league, players):
 
     class DummyMatchForm(ModelForm):
         """A simple read-only inline form for a single match used in bulk match creation"""
@@ -263,6 +263,8 @@ def create_simple_match_form(players):
             self.fields["away_team"].queryset = players
             self.fields["home_team"].required = True
             self.fields["away_team"].required = True
+
+            self.fields["court"].queryset = models.Court.objects.filter(league=league)
             return
 
     return DummyMatchForm

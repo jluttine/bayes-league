@@ -165,12 +165,14 @@ class MatchForm(ModelForm):
         ):
             del self.fields["datetime"]
 
-        if league.court_set.count() == 0:
+        courts = self.fields["court"].queryset.filter(league=league)
+        if not courts.exists():
             # Don't show court field if there are no courts
             del self.fields["court"]
         else:
             # Require court if there are courts. This requirement is only on UI
             # level. It's ok to have NULL courts.
+            self.fields["court"].queryset = courts
             self.fields["court"].required = True
 
         # Don't show datetime started if the match hasn't been started

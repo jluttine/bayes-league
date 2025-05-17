@@ -919,17 +919,18 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
     if N % 2 == 0:
         odd_matches = []
         remaining_players = np.arange(N)
+        odd_player = None
     else:
-        # Find the "odd" player
-        odd_player = np.lexsort(
-            (
-                # 2nd criterion: worst ranking
-                np.array([-np.inf if p.score is None else p.score for p in players]),
-                # 1st criterion: least matches played
-                np.sum(C, axis=0),
-            )
-        )[0]
         if odd_player_plays:
+            # Find the "odd" player: has played the least
+            odd_player = np.lexsort(
+                (
+                    # 2nd criterion: worst ranking
+                    np.array([-np.inf if p.score is None else p.score for p in players]),
+                    # 1st criterion: least matches played
+                    np.sum(C, axis=0),
+                )
+            )[0]
             # The odd player plays twice
             opponent = np.lexsort(
                 (
@@ -944,6 +945,15 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
             odd_matches = [(opponent, odd_player)]
             remaining_players = np.delete(np.arange(N), opponent)
         else:
+            # Find the "odd" player: has played the most
+            odd_player = np.lexsort(
+                (
+                    # 2nd criterion: worst ranking
+                    np.array([-np.inf if p.score is None else p.score for p in players]),
+                    # 1st criterion: most matches played
+                    -np.sum(C, axis=0),
+                )
+            )[0]
             # The odd player doesn't play at all
             odd_matches = []
             remaining_players = np.delete(np.arange(N), odd_player)
@@ -1089,6 +1099,19 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
         (0, 0),
     )
     logging.info("Match pairing optimization ended")
+
+    if odd_player is not None and odd_player_plays:
+        # Move the second match of the odd player to be the last match
+        inds = [
+            i
+            # NOTE: The odd matches aren't yet in matches list
+            for i in range(len(matches))
+            if matches[i][0] == odd_player or matches[i][1] == odd_player
+        ]
+        if len(inds) > 0:
+            i = inds[0]
+            m = matches.pop(i)
+            matches.append(m)
 
     # Convert the list indices to player objects
     return [

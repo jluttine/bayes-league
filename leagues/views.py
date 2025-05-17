@@ -1228,7 +1228,7 @@ def create_multiple_matches(request, league_slug):
             for f in formset:
                 f.instance.league = league
             if stage_form.is_valid():
-                stage = stage_form.cleaned_data["stage"]
+                stage = stage_form.cleaned_data.get("stage")
                 valid = True
                 for f in formset:
                     f.instance.stage = stage

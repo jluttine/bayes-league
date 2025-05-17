@@ -894,13 +894,17 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
                 j = ijs[ap.id]
                 C[i,j] += 1
 
+    C_extra = np.zeros((N, N))
     for (hp, ap) in extra_matches:
         i = ijs[hp.id]
         j = ijs[ap.id]
-        C[i,j] += 1
+        C_extra[i,j] += 1
+
+    C = C + C_extra
 
     # We don't care about home vs away, so make the matrix symmetric
     C = C + C.T
+    C_extra = C_extra + C_extra.T
 
     # Ranking difference cost as a matrix
     rankings = np.array([
@@ -927,8 +931,9 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
                 (
                     # 2nd criterion: worst ranking
                     np.array([-np.inf if p.score is None else p.score for p in players]),
-                    # 1st criterion: least matches played
-                    np.sum(C, axis=0),
+                    # 1st criterion: least matches played, take into account
+                    # extra matches only
+                    np.sum(C_extra, axis=0),
                 )
             )[0]
             # The odd player plays twice
@@ -950,8 +955,9 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
                 (
                     # 2nd criterion: worst ranking
                     np.array([-np.inf if p.score is None else p.score for p in players]),
-                    # 1st criterion: most matches played
-                    -np.sum(C, axis=0),
+                    # 1st criterion: most matches played, take into account
+                    # extra matches only
+                    -np.sum(C_extra, axis=0),
                 )
             )[0]
             # The odd player doesn't play at all

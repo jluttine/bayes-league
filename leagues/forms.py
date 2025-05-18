@@ -93,6 +93,13 @@ class CourtForm(ModelForm):
             "name",
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['name'].widget.attrs.update(dict(
+            autofocus=True,
+        ))
+        return
+
 
 class ResultForm(ModelForm):
 

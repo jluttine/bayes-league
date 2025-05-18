@@ -338,7 +338,7 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
             league=league,
             next_matches=league.match_set.with_total_points(next_up=next_up, user=user).filter(
                 can_start=True,
-            ).order_by("-datetime"),
+            ).order_by("-datetime", "-pk"),
             ongoing_matches=league.match_set.with_total_points(user=user, next_up=None).filter(
                 period_count=0,
                 datetime_started__isnull=False,

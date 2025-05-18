@@ -105,7 +105,7 @@ class League(models.Model):
         return self.match_set.with_period_count().filter(
             period_count=0,
             datetime_started__isnull=True,
-        ).order_by("datetime")[:self.nextup_matches_count]
+        ).order_by("datetime", "pk")[:self.nextup_matches_count]
 
     def __str__(self):
         return f"{self.title}"

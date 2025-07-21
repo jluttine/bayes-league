@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.utils.text import slugify
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
-from ordered_model.models import OrderedModel
+from ordered_model.models import OrderedModel, OrderedModelManager
 
 from . import ranking
 
@@ -371,7 +371,7 @@ class Court(OrderedModel):
         return self.name
 
 
-class MatchManager(models.Manager):
+class MatchManager(OrderedModelManager):
 
     def with_players(self, players):
         player_qs = Player.objects.filter(
@@ -549,7 +549,7 @@ class MatchManager(models.Manager):
         )  # Meta.ordering not obeyed, so sort explicitly
 
 
-class Match(models.Model):
+class Match(OrderedModel):
     objects = MatchManager()
     league = models.ForeignKey(
         League,
@@ -602,8 +602,13 @@ class Match(models.Model):
     )
     last_updated = models.DateTimeField(auto_now=True)
 
+    order_with_respect_to = (
+        "league",
+    )
+
     class Meta:
-        ordering = ["-datetime"]
+        # The ordering is defined in OrderedModel base class
+        ordering = ["order"]
 
     def has_result(self):
         return (

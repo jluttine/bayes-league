@@ -102,10 +102,48 @@ class League(models.Model):
         return
 
     def next_up_matches(self):
-        return self.match_set.with_period_count().filter(
-            period_count=0,
-            datetime_started__isnull=True,
-        ).order_by("datetime", "pk")[:self.nextup_matches_count]
+        courts = self.court_set.all()
+        if courts.exists():
+            # If all database backends supported "distinct on column", we could
+            # just do:
+            #
+            # return self.match_set.with_period_count().filter(
+            #     period_count=0,
+            #     datetime_started__isnull=True,
+            # ).order_by("order").distinct(
+            #     "court",
+            # )
+            #
+            # But as some backends don't support it, let's do it less
+            # efficiently by querying for each court.
+            next_up = self.match_set.with_period_count().filter(
+                court=models.OuterRef("pk"),
+                period_count=0,
+                datetime_started__isnull=True,
+            ).order_by("order").values("pk")[:1]
+            cs = courts.annotate(
+                next_up=models.Subquery(next_up),
+            )
+            return [c.next_up for c in cs] + list(
+                self.match_set.with_period_count().filter(
+                    court=None,
+                    period_count=0,
+                    datetime_started__isnull=True,
+                ).order_by("order").values_list("pk", flat=True)[:1]
+            )
+        else:
+            return self.match_set.with_period_count().filter(
+                period_count=0,
+                datetime_started__isnull=True,
+            ).order_by("order")[:self.nextup_matches_count]
+
+        # return self.match_set.with_period_count().filter(
+        #     period_count=0,
+        #     datetime_started__isnull=True,
+        # # ).order_by("datetime", "pk").distinct(
+        # #     "court",
+        # # )[:self.nextup_matches_count]
+        # ).order_by("datetime", "pk")[:self.nextup_matches_count]
 
     def __str__(self):
         return f"{self.title}"

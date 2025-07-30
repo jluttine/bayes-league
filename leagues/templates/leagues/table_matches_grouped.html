@@ -1,8 +1,26 @@
-{% regroup matches by stage as stage_groups %}
 {% with show_court=league.court_set.exists %}
+
+{% if ongoing %}
+<h3>Ongoing</h3>
+
+{% include 'leagues/table_matches.html' with matches=ongoing show_court=show_court hide_bonus=True datetime_title="Start time" %}
+
+{% endif %}
+
+{% if upcoming %}
+<h3>Upcoming</h3>
+
+{% include 'leagues/table_matches.html' with matches=upcoming show_court=show_court hide_bonus=True hide_time=True %}
+
+{% endif %}
+
+{% if finished %}
+<h3>Finished</h3>
+
+{% regroup finished by stage as stage_groups %}
 {% for stage in stage_groups %}
 {% if stage.grouper.name != None %}
-<h3><a href="{% url 'view_stage' stage.grouper.league.slug stage.grouper.slug %}">{{ stage.grouper }}</a></h3>
+<h4><a href="{% url 'view_stage' stage.grouper.league.slug stage.grouper.slug %}">{{ stage.grouper }}</a></h4>
 {% endif %}
 {% if stage.grouper.bonus != None %}
 {% if stage.grouper.bonus != 0 %}
@@ -15,6 +33,9 @@ Bonus points: {{ league.bonus }} (league default)
 {% else %}
 {% endif %}
 {% endif %}
-{% include 'leagues/table_matches.html' with matches=stage.list show_court=show_court %}
+{% include 'leagues/table_matches.html' with matches=stage.list show_court=False datetime_title="End time" %}
 {% endfor %}
+
+{% endif %}
+
 {% endwith %}

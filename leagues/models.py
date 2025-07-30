@@ -214,8 +214,7 @@ class Stage(OrderedModel):
         self.slug = slugify(self.name)
         return
 
-    def get_matches(self, user):
-        next_up = self.league.next_up_matches()
+    def get_matches(self, user, next_up=None):
         return Match.objects.with_total_points(user, next_up=next_up).filter(
             models.Q(stage=self) |
             models.Q(stage__in=self.included.all())
@@ -375,6 +374,32 @@ def annotate_matches_with_periods(matches):
             ),
             0,
         ),
+    )
+
+
+def group_matches(matches):
+    """Group matches to upcoming, ongoing and finished
+
+    .. note::
+
+        The matches need to be sorted so that first are upcoming, then ongoing
+        and then finished matches.
+
+    """
+    upcoming = []
+    ongoing = []
+    finished = []
+    for m in matches:
+        if m.period_count > 0:
+            finished.append(m)
+        elif m.datetime_started is not None:
+            ongoing.append(m)
+        else:
+            upcoming.append(m)
+    return dict(
+        upcoming=upcoming[::-1],
+        ongoing=ongoing,
+        finished=finished,
     )
 
 

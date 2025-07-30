@@ -1,4 +1,6 @@
 {% load leaguetags %}
+{% for match in matches %}
+{% if forloop.first %}
 <div class="table-container">
   <table class="table is-striped">
     <thead>
@@ -19,8 +21,7 @@
       </tr>
     </thead>
     <tbody>
-
-      {% for match in matches %}
+{% endif %}
       <tr>
         {% if show_counter and not show_court %}
         <td>
@@ -129,7 +130,9 @@
         </td>
         {% endif %}
       </tr>
-      {% endfor %}
+{% if forloop.last %}
     </tbody>
   </table>
 </div>
+{% endif %}
+{% endfor %}

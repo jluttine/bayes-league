@@ -146,9 +146,8 @@ def info(request, league_slug):
     )
 
 
-def get_user_banner_matches(league, user, next_up):
-    matches = league.match_set.with_total_points(user=user, next_up=next_up)
-    user_dict = (
+def get_user_banner_matches(matches, league, user):
+    return (
         {} if user is None or can_administrate(league, user) else
         dict(
             user_next_up=matches.filter(
@@ -162,16 +161,13 @@ def get_user_banner_matches(league, user, next_up):
             ),
         )
     )
-    return dict(
-        matches=matches,
-        **user_dict,
-    )
 
 
 def view_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
     next_up = league.next_up_matches()
+    matches = league.match_set.with_total_points(user=user, next_up=next_up)
     return render(
         request,
         "leagues/view_league.html",
@@ -186,7 +182,8 @@ def view_league(request, league_slug):
             ],
             user_player=user,
             can_administrate=can_administrate(league, user),
-            **get_user_banner_matches(league, user, next_up),
+            **get_user_banner_matches(matches, league, user),
+            **models.group_matches(matches),
         )
     )
 
@@ -381,17 +378,23 @@ def view_player(request, league_slug, player_uuid):
     player = get_object_or_404(models.Player, league__slug=league_slug, uuid=player_uuid)
     user = get_user(player.league, request)
     next_up = player.league.next_up_matches()
+    matches = player.league.match_set.with_total_points(
+        user=user,
+        next_up=next_up,
+        player=player,
+    )
     return render(
         request,
         "leagues/view_player.html",
         dict(
             league=player.league,
             player=player,
-            matches=models.Match.objects.with_total_points(
+            **get_user_banner_matches(
+                matches=matches,
+                league=player.league,
                 user=user,
-                player=player,
-                next_up=next_up,
             ),
+            **models.group_matches(matches),
             ranking_stats=models.RankingScore.objects.with_ranking_stats(player),
             user_player=user,
             can_administrate=can_administrate(player.league, user),
@@ -681,15 +684,18 @@ def view_stage(request, league_slug, stage_slug):
         slug=stage_slug,
     )
     user = get_user(stage.league, request)
+    next_up = stage.league.next_up_matches()
+    matches = stage.get_matches(user=user, next_up=next_up)
     return render(
         request,
         "leagues/view_stage.html",
         dict(
             league=stage.league,
             stage=stage,
-            matches=stage.get_matches(user=user),
             user_player=user,
             can_administrate=can_administrate(stage.league, user),
+            **get_user_banner_matches(matches, stage.league, user),
+            **models.group_matches(matches),
         )
     )
 

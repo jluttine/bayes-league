@@ -397,9 +397,23 @@ def group_matches(matches):
         else:
             upcoming.append(m)
     return dict(
-        upcoming=upcoming[::-1],
-        ongoing=ongoing,
-        finished=finished,
+        upcoming=sorted(
+            upcoming,
+            key=lambda m: m.order,
+            reverse=False,
+        ),
+        ongoing=sorted(
+            ongoing,
+            key=lambda m: m.datetime_started,
+            reverse=True,
+        ),
+        finished=sorted(
+            finished,
+            key=lambda m: (
+                -float("inf") if m.stage is None else -m.stage.order,
+                m.datetime_last_period,
+            ),
+        ),
     )
 
 
@@ -607,8 +621,7 @@ class MatchManager(OrderedModelManager):
             "stage",
             models.F("datetime_last_period").desc(nulls_first=True),
             models.F("datetime_started").desc(nulls_first=True),
-            "-datetime",
-            "-pk",
+            "order",
         )  # Meta.ordering not obeyed, so sort explicitly
 
 

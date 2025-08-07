@@ -128,8 +128,8 @@ class ResultForm(ModelForm):
         # using the built-in form/formset features.
         if self.instance.last_updated != self.cleaned_data.get("last_updated_constraint"):
             raise ValidationError(
-                "Someone had modified the match at the same time. "
-                "Please cancel and try again if needed."
+                "Someone had modified the match at the same time.",
+                code="modified",
             )
         return
 

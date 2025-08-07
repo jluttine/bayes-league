@@ -79,6 +79,20 @@ def model_form_view(request, Form, template, redirect, context={}, save=True,
     if instance is None:
         instance = Form.Meta.model()
 
+    def initial_form(message=None):
+        form = Form(instance=instance)
+        if message is not None:
+            form.message = message
+        return render(
+            request,
+            template,
+            dict(
+                form=form,
+                formset=InlineFormSet(instance=instance),
+                **context,
+            ),
+        )
+
     if request.method == "POST":
 
         def process():
@@ -94,28 +108,34 @@ def model_form_view(request, Form, template, redirect, context={}, save=True,
                         form.save()
                         formset.save()
                     return http.HttpResponseRedirect(redirect(**form.cleaned_data))
-
-            return render(
-                request,
-                template,
-                dict(
-                    form=form,
-                    formset=formset,
-                    **context,
+            elif any(
+                    "modified" == e.code
+                    for e in form.errors.as_data().get("__all__", [])
+            ):
+                # Special handling for the case when multiple people edited the
+                # form at the same time.
+                return initial_form(
+                    message=(
+                        "ERROR: Someone edited at the same time. "
+                        "Your input was ignored. Please check if everything is "
+                        "correct and modify again if needed. "
+                        "Sorry for the inconvenience."
+                    )
                 )
-            )
+            else:
+                return render(
+                    request,
+                    template,
+                    dict(
+                        form=form,
+                        formset=formset,
+                        **context,
+                    )
+                )
         return conditional(request.POST, process)
 
     else:
-        return render(
-            request,
-            template,
-            dict(
-                form=Form(instance=instance),
-                formset=InlineFormSet(instance=instance),
-                **context,
-            ),
-        )
+        return initial_form()
 
 
 def index(request):

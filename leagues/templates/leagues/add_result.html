@@ -1,6 +1,12 @@
 {% extends "leagues/base.html" %}
 
 {% block content %}
+{% if form.message %}
+<p class="has-background-danger">
+{{ form.message }}
+</p>
+{% endif %}
+
 <h1>{% if editing %}Edit{% else %}Add{% endif %} result</h1>
 
 <form action="{% url 'add_result' match.league.slug match.uuid %}" method="post">

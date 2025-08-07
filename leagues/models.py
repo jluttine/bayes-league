@@ -405,7 +405,7 @@ def group_matches(matches):
         ongoing=sorted(
             ongoing,
             key=lambda m: m.datetime_started,
-            reverse=True,
+            reverse=False,
         ),
         finished=sorted(
             sorted(

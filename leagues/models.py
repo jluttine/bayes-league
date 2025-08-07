@@ -408,11 +408,13 @@ def group_matches(matches):
             reverse=True,
         ),
         finished=sorted(
-            finished,
-            key=lambda m: (
-                -float("inf") if m.stage is None else -m.stage.order,
-                m.datetime_last_period,
+            sorted(
+                finished,
+                key=lambda m: m.datetime_last_period,
+                reverse=True,
             ),
+            key=lambda m: -float("inf") if m.stage is None else -m.stage.order,
+            reverse=False,
         ),
     )
 

@@ -355,11 +355,11 @@ def view_dashboard(request, league_slug, template="leagues/view_dashboard.html")
             league=league,
             next_matches=league.match_set.with_total_points(next_up=next_up, user=user).filter(
                 can_start=True,
-            ).order_by("-datetime", "-pk"),
+            ).order_by("court", "order", "pk"),
             ongoing_matches=league.match_set.with_total_points(user=user, next_up=None).filter(
                 period_count=0,
                 datetime_started__isnull=False,
-            ).order_by("-datetime_started"),
+            ).order_by("court", "-datetime_started"),
             latest_matches=league.match_set.with_total_points(user=user, next_up=None).filter(
                 period_count__gt=0,
             ).order_by("-datetime_last_period")[:league.latest_matches_count],

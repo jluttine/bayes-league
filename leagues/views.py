@@ -1183,8 +1183,6 @@ def create_multiple_matches(request, league_slug):
             m = len(players)
             courts = form.cleaned_data.get("courts", [None])
             n = len(courts)
-            duration = form.cleaned_data["duration_in_minutes"]
-            datetime_start = form.cleaned_data["datetime"]
             rounds = form.cleaned_data["rounds"]
 
             if form.cleaned_data["autofill_teams"]:
@@ -1213,15 +1211,8 @@ def create_multiple_matches(request, league_slug):
                         home_team=[p1],
                         away_team=[p2],
                         court=court,
-                        datetime=datetime_start + datetime.timedelta(minutes=offset),
                     )
-                    for (offset, court, (p1, p2)) in zip(
-                            chain.from_iterable(
-                                map(
-                                    lambda d: repeat(d, n),
-                                    count(0, duration),
-                                ),
-                            ),
+                    for (court, (p1, p2)) in zip(
                             cycle(courts),
                             matches,
                     )

@@ -284,19 +284,6 @@ class BulkMatchForm(Form):
     courts = ModelMultipleChoiceField(
         models.Court.objects.all()
     )
-    duration_in_minutes = IntegerField(
-        min_value=1,
-        max_value=365*24*60,
-        initial=1,
-    )
-    datetime = DateTimeField(
-        initial=lambda: (
-            timezone.now()
-            .astimezone(timezone.get_default_timezone())
-            .strftime("%Y-%m-%d %H:%M")
-        ),
-        input_formats=["%Y-%m-%d %H:%M"],
-    )
     rounds = IntegerField(
         min_value=1,
         max_value=10,
@@ -321,7 +308,6 @@ class BulkMatchForm(Form):
         else:
             del self.fields["courts"]
 
-        self.fields["datetime"].initial = timezone.now()
         return
 
     def clean_players(self):

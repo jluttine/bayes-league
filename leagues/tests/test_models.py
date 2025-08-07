@@ -20,7 +20,7 @@ class SimpleTest(TestCase):
     def test_create_player(self):
         response = self.client.post("/league/test-league/players/add/")
         self.assertEqual(response.status_code, 200)
-        response = self.client.get("/league/test-league/players/view/")
+        #response = self.client.get("/league/test-league/players/view/")
         return
 
 

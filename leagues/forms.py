@@ -146,7 +146,6 @@ class MatchForm(ModelForm):
         fields = [
             "stage",
             "court",
-            "datetime",
             "datetime_started",
             "home_team",
             "away_team",
@@ -163,14 +162,6 @@ class MatchForm(ModelForm):
         else:
             self.fields["stage"].queryset = stages
             self.fields["stage"].required = True
-
-        # Don't show scheduled time if the match has already been started or
-        # finished
-        if self.instance.pk is not None and (
-                self.instance.datetime_started is not None or
-                self.instance.period_set.count() > 0
-        ):
-            del self.fields["datetime"]
 
         courts = self.fields["court"].queryset.filter(league=league)
         if not courts.exists():

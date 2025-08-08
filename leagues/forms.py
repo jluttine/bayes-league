@@ -252,7 +252,7 @@ def create_simple_match_form(league, players):
 
         class Meta:
             model = models.Match
-            fields = ["datetime", "court", "home_team", "away_team"]
+            fields = ["court", "home_team", "away_team"]
 
         clean = MatchForm.clean
 

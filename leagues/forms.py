@@ -36,6 +36,12 @@ class LeagueForm(ModelForm):
             "dashboard_update_interval",
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.court_set.exists():
+            # Next-up count is based on the number of courts
+            del self.fields["nextup_matches_count"]
+
 
 class PlayerForm(ModelForm):
 

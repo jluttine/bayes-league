@@ -1,21 +1,21 @@
 {% with show_court=league.court_set.exists %}
 
 {% if ongoing %}
-<h3>Ongoing</h3>
+<h3><span class="material-symbols-outlined">play_circle</span> In progress, currently playing</h3>
 
 {% include 'leagues/table_matches.html' with matches=ongoing show_court=show_court hide_bonus=True datetime_title="Start time" %}
 
 {% endif %}
 
 {% if upcoming %}
-<h3>Upcoming</h3>
+<h3><span class="material-symbols-outlined">next_plan</span> Upcoming</h3>
 
 {% include 'leagues/table_matches.html' with matches=upcoming show_court=show_court hide_bonus=True hide_time=True %}
 
 {% endif %}
 
 {% if finished %}
-<h3>Finished</h3>
+<h3><span class="material-symbols-outlined">check_circle</span> Finished</h3>
 
 {% regroup finished by stage as stage_groups %}
 {% for stage in stage_groups %}

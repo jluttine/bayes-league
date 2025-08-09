@@ -7,19 +7,19 @@
     {% endfor %}
   </div>
   <div class="column">
-    <h2>Next up</h2>
+    <h2><span class="material-symbols-outlined">next_plan</span> Next up, ready to play</h2>
     {% if next_matches %}
     {% include 'leagues/table_matches.html' with matches=next_matches hide_time=True hide_bonus=True hide_info=True show_counter=True result_title=" " %}
     {% else %}
     No upcoming matches
     {% endif %}
-    <h2>Ongoing</h2>
+    <h2><span class="material-symbols-outlined">play_circle</span> In progress, currently playing</h2>
     {% if ongoing_matches %}
     {% include 'leagues/table_matches.html' with matches=ongoing_matches hide_bonus=True hide_info=True hide_add_result=True datetime_title="Start time" result_title=" " %}
     {% else %}
     No matches at the moment
     {% endif %}
-    <h2>Latest</h2>
+    <h2><span class="material-symbols-outlined">check_circle</span> Latest results</h2>
     {% if latest_matches %}
     {% include 'leagues/table_matches.html' with matches=latest_matches hide_info=True use_datetime_last_period=True datetime_title="End time" hide_bonus=True show_court=False %}
     {% else %}

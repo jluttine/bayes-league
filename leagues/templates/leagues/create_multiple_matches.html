@@ -15,7 +15,15 @@
 {% if formset %}
 
 <div class="block">
-The following matches would be created. Please confirm below or modify the settings above and re-generate a new set of matches.
+  <p>
+  The following matches would be created. Please confirm below or modify the settings above and re-generate a new set of matches.
+  </p>
+
+  {% if form.message %}
+  <p class="has-background-warning">
+    <strong>{{ form.message }}</strong>
+  </p>
+  {% endif %}
 </div>
 
 <form action="{% url 'create_multiple_matches' league.slug %}" method="post">

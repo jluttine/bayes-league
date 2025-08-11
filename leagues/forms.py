@@ -323,9 +323,12 @@ class BulkMatchForm(Form):
             pass
         else:
             if (players * rounds) % 2 != 0:
-                raise ValidationError(
-                    "Either the number of players or rounds must be even"
-                )
+                self.message = """
+                    WARNING: Both the number of players and rounds was odd.
+                    Therefore, one player will be assigned to one match more
+                    than the other players. If this is not ok, please consider
+                    choosing even number of rounds and/or players.
+                """
         return self.cleaned_data
 
 

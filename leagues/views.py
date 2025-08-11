@@ -974,7 +974,13 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
                 )
             )[0]
             odd_matches = [(opponent, odd_player)]
-            remaining_players = np.delete(np.arange(N), opponent)
+            if C_extra[opponent,:].sum() > C_extra[odd_player,:].sum():
+                # If the odd player had played less, let them play more
+                remaining_players = np.delete(np.arange(N), opponent)
+            else:
+                # Otherwise, let the opponent play more, because it's nicer to
+                # let the one higher in the ranking to play more.
+                remaining_players = np.delete(np.arange(N), odd_player)
         else:
             # Find the "odd" player: has played the most
             odd_player = np.lexsort(

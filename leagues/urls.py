@@ -112,6 +112,11 @@ urlpatterns = [
         name="create_multiple_matches",
     ),
     path(
+        "league/<slug:league_slug>/matches/calibration/",
+        views.create_calibration_matches,
+        name="create_calibration_matches",
+    ),
+    path(
         "league/<slug:league_slug>/matches/generate_tournament/",
         views.generate_tournament,
         name="generate_tournament",

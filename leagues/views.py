@@ -1444,6 +1444,181 @@ def generate_tournament(request, league_slug):
         )
 
 
+def create_calibration_matches(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    if request.method == "POST":
+
+        # NOTE: If we are coming here from the confirmation phase, the request
+        # contains data from the hidden fields for the first form.
+        #form = forms.BulkMatchForm(league, request.POST)
+        players = models.Player.objects.filter(league=league)
+
+        n = players.count()
+        PlayerFormSet = formset_factory(
+            forms.CalibrationPlayerSelectionForm,
+            extra=n,
+            max_num=n,
+            absolute_max=n,
+            validate_max=True,
+            formset=forms.CalibrationPlayerSelectionFormSet,
+        )
+        player_formset = PlayerFormSet(
+            request.POST,
+            form_kwargs=dict(players=players),
+            prefix="players",
+        )
+
+        form = forms.CalibrationForm(request.POST, league=league)
+
+        if not player_formset.is_valid() or not form.is_valid():
+            return render(
+                request,
+                "leagues/create_calibration_matches.html",
+                dict(
+                    form=form,
+                    player_formset=player_formset,
+                    league=league,
+                    user_player=user,
+                    can_administrate=True,
+                )
+            )
+
+        if "generate" in request.POST:
+            ps = [
+                f.cleaned_data["player"]
+                for f in player_formset.forms
+                if f.has_changed()
+            ]
+            m = len(players)
+            courts = form.cleaned_data.get("courts", [None])
+            n = len(courts)
+
+            matches = tournament.create_circular_pairing(ps)
+
+            DummyMatchFormset = formset_factory(
+                forms.create_simple_match_form(
+                    players=players,
+                    league=league,
+                ),
+                extra=0,
+            )
+            match_formset = DummyMatchFormset(
+                initial=[
+                    dict(
+                        home_team=[p1],
+                        away_team=[p2],
+                        court=court,
+                    )
+                    for (court, (p1, p2)) in zip(
+                            cycle(courts),
+                            matches,
+                    )
+                ],
+                prefix="matches",
+            )
+            # Use the algorithm to create matches
+            #
+            # Show a page that lists the games and asks for confirmation
+            # matches = [
+            #     (p1, p2)
+            #     for (p1, p2) in zip(players[0::2], players[1::2])
+            # ]
+            return render(
+                request,
+                "leagues/create_calibration_matches.html",
+                dict(
+                    form=form,
+                    player_formset=player_formset,
+                    league=league,
+                    match_formset=match_formset,
+                    user_player=user,
+                    can_administrate=True,
+                )
+            )
+
+        elif "confirm" in request.POST:
+            DummyMatchFormset = formset_factory(
+                forms.create_simple_match_form(
+                    players=players,
+                    league=league,
+                ),
+                extra=0,
+            )
+            match_formset = DummyMatchFormset(
+                request.POST,
+                initial=[],
+                prefix="matches",
+            )
+            for f in match_formset:
+                f.instance.league = league
+            stage = form.cleaned_data.get("stage")
+            valid = True
+            for f in match_formset:
+                f.instance.stage = stage
+                if not f.is_valid():
+                    print(f)
+                    valid = False
+            if valid:
+                for f in match_formset:
+                    instance = f.save()
+
+                # FIXME: We wouldn't need to completely recalculate the
+                # ranking, just adding missing players with None ranking
+                # suffices.
+                update_ranking(league, stage)
+                # Redirect to the league page
+                return http.HttpResponseRedirect(
+                    reverse("view_league", args=[league.slug])
+                )
+
+            return render(
+                request,
+                "leagues/create_calibration_matches.html",
+                dict(
+                    form=form,
+                    league=league,
+                    player_formset=player_formset,
+                    match_formset=match_formset,
+                    user_player=user,
+                    can_administrate=True,
+                )
+            )
+
+        else:
+            raise RuntimeError("Unknown form")
+
+
+    else:
+        PlayerFormSet = formset_factory(
+            forms.CalibrationPlayerSelectionForm,
+            extra=models.Player.objects.filter(league=league).count(),
+            formset=forms.CalibrationPlayerSelectionFormSet,
+        )
+        player_formset = PlayerFormSet(
+            form_kwargs=dict(
+                players=models.Player.objects.filter(league=league),
+            ),
+            prefix="players",
+        )
+        form = forms.CalibrationForm(league=league)
+        return render(
+            request,
+            "leagues/create_calibration_matches.html",
+            dict(
+                form=form,
+                player_formset=player_formset,
+                league=league,
+                user_player=user,
+                can_administrate=True,
+            ),
+        )
+
+
 def view_match(request, league_slug, match_uuid):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)

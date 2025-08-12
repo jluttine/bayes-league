@@ -1,5 +1,6 @@
 from django.forms import (
     Form,
+    BaseFormSet,
     ModelForm,
     ModelMultipleChoiceField,
     ModelChoiceField,
@@ -7,6 +8,7 @@ from django.forms import (
     IntegerField,
     BooleanField,
     HiddenInput,
+    Select,
 )
 from django.core.exceptions import ValidationError
 from django.utils import timezone
@@ -251,7 +253,7 @@ class ChooseStageForm(ModelForm):
         return
 
 
-def create_simple_match_form(league, players):
+def create_simple_match_form(league, players, single_player_teams=False):
 
     class DummyMatchForm(ModelForm):
         """A simple read-only inline form for a single match used in bulk match creation"""
@@ -259,6 +261,11 @@ def create_simple_match_form(league, players):
         class Meta:
             model = models.Match
             fields = ["court", "home_team", "away_team"]
+            if single_player_teams:
+                widgets = dict(
+                    home_team=Select(),
+                    away_team=Select(),
+                )
 
         clean = MatchForm.clean
 
@@ -355,4 +362,61 @@ class TournamentForm(Form):
         self.fields["players"].queryset = models.Player.objects.filter(league=league)
         self.fields["players"].initial = self.fields["players"].queryset
         self.fields["special_player"].queryset = models.Player.objects.filter(league=league)
+        return
+
+
+class CalibrationPlayerSelectionForm(Form):
+
+    player = ModelChoiceField(
+        models.Player.objects.all(),
+        required=True,
+    )
+
+    def __init__(self, *args, players, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["player"].queryset = players
+        return
+
+class CalibrationPlayerSelectionFormSet(BaseFormSet):
+
+    def clean(self):
+        if any(self.errors):
+            return
+        players = set()
+        for f in self.forms:
+            if f.has_changed() and f.is_valid():
+                player = f.cleaned_data["player"]
+                if player in players:
+                    raise ValidationError("A player can be selected only once")
+                players.add(player)
+        return
+
+class CalibrationForm(Form):
+
+    stage = ModelChoiceField(
+        models.Stage.objects.all()
+    )
+    courts = ModelMultipleChoiceField(
+        models.Court.objects.all()
+    )
+
+
+    def __init__(self, *args, league, **kwargs):
+        super().__init__(*args, **kwargs)
+        courts = models.Court.objects.filter(league=league)
+        if courts.exists():
+            self.fields["courts"].queryset = courts
+            self.fields["courts"].initial = courts
+            self.fields["courts"].required = True
+        else:
+            del self.fields["courts"]
+
+        self.fields["stage"].queryset = self.fields["stage"].queryset.filter(
+            league=league
+        )
+        if not self.fields["stage"].queryset.exists():
+            del self.fields["stage"]
+        else:
+            self.fields["stage"].required = True
+
         return

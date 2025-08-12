@@ -596,3 +596,41 @@ def sort_rounds(matches, courts):
         (-1, p),
     )
 
+
+def create_circular_pairing(players):
+    """Create 1v1 matches so that match connections form a circle
+
+    This is a convenient way to create "calibration" rounds, because there will
+    be a connection from any player to all other players via match links. The
+    match graph will be a circle where players are nodes and matches are edges.
+
+    With even number of players, the pairing looks like this (6 players):
+
+    1-2
+    3-4
+    5-6
+    2-3
+    4-5
+    6-1
+
+    With odd number of players, the pairing looks like this (7 players):
+
+    1-2
+    3-4
+    5-6
+    7-1
+    2-3
+    4-5
+    6-7
+
+    """
+
+    n = len(players)
+    is_odd = (n % 2 == 1)
+
+    home_teams = players[::2] + players[1::2]
+    away_teams = players[1::2] + (
+        players[::2] if is_odd else
+        (players[2::2] + players[:1])
+    )
+    return list(zip(home_teams, away_teams))

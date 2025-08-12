@@ -3,5 +3,6 @@
 <a class="button is-primary" href="{% if stage.slug is not None %}{% url 'create_match' league.slug stage.slug %}{% else %}{% url 'create_match' league.slug %}{% endif %}">Add match</a>
 {# <a class="button is-primary is-light" href="{% url 'generate_tournament' league.slug %}">Generate tournament</a> #}
 <a class="button is-primary is-light" href="{% url 'create_multiple_matches' league.slug %}">Bulk create matches</a>
+<a class="button is-primary is-light" href="{% url 'create_calibration_matches' league.slug %}">Create calibration matches</a>
 {% endif %}
 </h2>

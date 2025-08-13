@@ -176,4 +176,14 @@ urlpatterns = [
         views.logout,
         name="logout",
     ),
+    path(
+        "league/<slug:league_slug>/export/",
+        views.export_league,
+        name="export_league",
+    ),
+    path(
+        "import/",
+        views.import_league,
+        name="import_league",
+    ),
 ]

@@ -4,6 +4,13 @@
 <b>If you want to create a league, please contact the web site administrator.</b>
 </p>
 
+{% if user.is_superuser %}
+
+<a class="button is-primary" href="{% url 'import_league' %}">
+  Import league
+</a>
+{% endif %}
+
 {% if debug %}
 <p>
 Existing leagues (only visible in debug mode):

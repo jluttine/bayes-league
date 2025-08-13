@@ -7,6 +7,7 @@ from django.forms import (
     DateTimeField,
     IntegerField,
     BooleanField,
+    FileField,
     HiddenInput,
     Select,
 )
@@ -420,3 +421,12 @@ class CalibrationForm(Form):
             self.fields["stage"].required = True
 
         return
+
+
+class LeagueImportForm(ModelForm):
+
+    file = FileField(required=True)
+
+    class Meta:
+        model = models.League
+        fields = ["slug"]

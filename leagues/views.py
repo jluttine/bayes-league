@@ -17,6 +17,7 @@ from django.core import exceptions
 from django.core.exceptions import PermissionDenied, MultipleObjectsReturned
 from django.db import IntegrityError
 from django.db.models.functions import Now
+from django.core import serializers
 
 from . import models
 from . import forms
@@ -1883,4 +1884,98 @@ def logout(request, league_slug):
 
     return http.HttpResponseRedirect(
         reverse("view_league", args=[league_slug])
+    )
+
+
+def export_league(request, league_slug):
+    league = get_object_or_404(models.League, slug=league_slug)
+    user = get_user(league, request)
+    if not can_administrate(league, user):
+        raise PermissionDenied()
+
+    objs = (
+        [league] +
+        list(models.Stage.objects.filter(league=league)) +
+        list(models.Player.objects.filter(league=league)) +
+        list(models.Court.objects.filter(league=league)) +
+        list(models.Match.objects.filter(league=league)) +
+        list(models.HomeTeamPlayer.objects.filter(player__league=league)) +
+        list(models.AwayTeamPlayer.objects.filter(player__league=league)) +
+        list(models.Period.objects.filter(match__league=league))
+    )
+
+    return http.HttpResponse(
+        serializers.serialize(
+            "json",
+            objs,
+            use_natural_foreign_keys=True,
+            use_natural_primary_keys=True,
+        ),
+        headers={
+            "Content-Type": "application/json",
+            "Content-Disposition": f'attachment; filename="{league_slug}.json"',
+        },
+    )
+
+
+def import_league(request):
+    if not request.user.is_superuser:
+        raise PermissionDenied()
+
+    if request.method != "POST":
+        form = forms.LeagueImportForm()
+    else:
+        form = forms.LeagueImportForm(request.POST, request.FILES)
+        if form.is_valid():
+            f = form.cleaned_data["file"]
+
+            objs = serializers.deserialize(
+                "json",
+                f,
+                handle_forward_references=True,
+            )
+            # We need to handle deferred fields because Stages can refer other
+            # Stages arbitrarily
+            objs_with_deferred_fields = []
+
+            # Because we are changing the league slug, and league slug is being
+            # used as a reference key in many of the models and nested deep in
+            # the model tree, let's just use a "global" variable to override any
+            # league slug when importing
+            slug = form.cleaned_data["slug"]
+            token = models.LEAGUE_SLUG.set(form.cleaned_data["slug"])
+            try:
+                for obj in objs:
+                    # Make sure that:
+                    #
+                    # 1) we create new models even if the model already existed with the same natural key
+                    #
+                    # 2) models without naturaly keys (e.g., periods) won't use PKs
+                    #    but just create new periods
+                    if hasattr(obj.object, "pk"):
+                        obj.object.pk = None
+
+                    if isinstance(obj.object, models.League):
+                        obj.object.slug = slug
+
+                    obj.save()
+                    if obj.deferred_fields is not None:
+                        objs_with_deferred_fields.append(obj)
+
+                for obj in objs_with_deferred_fields:
+                    obj.save_deferred_fields()
+            finally:
+                models.LEAGUE_SLUG.reset(token)
+
+            # Update rankings
+            league = models.League.objects.get(slug=slug)
+            update_ranking(league, *models.Stage.objects.filter(league=league))
+            return http.HttpResponseRedirect(reverse("index"))
+
+    return render(
+        request,
+        "leagues/import_league.html",
+        dict(
+            form=form,
+        ),
     )

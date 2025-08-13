@@ -1,6 +1,7 @@
 import os
 import uuid
 import secrets
+import contextvars
 
 import numpy as np
 
@@ -14,6 +15,9 @@ from ordered_model.models import OrderedModel, OrderedModelManager
 from . import ranking
 
 
+LEAGUE_SLUG = contextvars.ContextVar("league_slug")
+
+
 def create_key():
     # Read the dictionary of 2048 words (i.e., 11-bits of entropy per word)
     path = os.path.dirname(__file__)
@@ -24,6 +28,14 @@ def create_key():
     # relevant fields have proper max_length.
     key = '-'.join(secrets.choice(words).strip() for i in range(4))
     return key
+
+
+class LeagueManager(models.Manager):
+    def get_by_natural_key(self, slug):
+        # Use the "global" league slug if defined so we can override the slug
+        # that was in the imported file
+        slug = LEAGUE_SLUG.get(slug)
+        return self.get(slug=slug)
 
 
 class League(models.Model):
@@ -64,6 +76,8 @@ class League(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True, editable=False)
 
+    objects = LeagueManager()
+
     class Meta:
         ordering = ["title"]
         constraints = [
@@ -80,6 +94,9 @@ class League(models.Model):
                 name="regularisation_gte_0",
             ),
         ]
+
+    def natural_key(self):
+        return (self.slug,)
 
     def clean(self):
         # Create a key when write-protection is enabled
@@ -149,6 +166,14 @@ class League(models.Model):
         return f"{self.title}"
 
 
+class StageManager(OrderedModelManager):
+    def get_by_natural_key(self, league_slug, stage_slug):
+        return self.get(
+            league__slug=LEAGUE_SLUG.get(league_slug),
+            slug=stage_slug,
+        )
+
+
 class Stage(OrderedModel):
     league = models.ForeignKey(
         League,
@@ -193,6 +218,8 @@ class Stage(OrderedModel):
         default=False,
     )
 
+    objects = StageManager()
+
     class Meta:
         # The ordering is defined in OrderedModel base class
         ordering = [models.F("order").desc(nulls_first=True)]
@@ -202,6 +229,11 @@ class Stage(OrderedModel):
                 name="unique_stage_slugs_in_league",
             ),
         ]
+
+    def natural_key(self):
+        return (self.league.slug, self.slug)
+
+    natural_key.dependencies = ["leagues.league"]
 
     @property
     def periods_safe(self):
@@ -225,6 +257,12 @@ class Stage(OrderedModel):
 
 
 class PlayerManager(models.Manager):
+
+    def get_by_natural_key(self, league_slug, uuid):
+        return self.get(
+            league__slug=LEAGUE_SLUG.get(league_slug),
+            uuid=uuid,
+        )
 
     def with_stats(self):
         # NOTE: Each sum needs to be a separate subquery, otherwise the results
@@ -312,6 +350,11 @@ class Player(models.Model):
                 name="unique_player_uuid_in_league",
             ),
         ]
+
+    def natural_key(self):
+        return (self.league.slug, self.uuid)
+
+    natural_key.dependencies = ["leagues.league"]
 
     def current_ranking_stats(self):
         if self.score is None:
@@ -422,6 +465,13 @@ def group_matches(matches):
     )
 
 
+class CourtManager(OrderedModelManager):
+    def get_by_natural_key(self, league_slug, name):
+        return self.get(
+            league__slug=LEAGUE_SLUG.get(league_slug),
+            name=name,
+        )
+
 class Court(OrderedModel):
     league = models.ForeignKey(
         League,
@@ -436,6 +486,8 @@ class Court(OrderedModel):
         null=False,
     )
 
+    objects = CourtManager()
+
     class Meta:
         # The ordering is defined in OrderedModel base class
         ordering = [models.F("order").desc(nulls_first=True)]
@@ -449,11 +501,22 @@ class Court(OrderedModel):
             ),
         ]
 
+    def natural_key(self):
+        return (self.league.slug, self.name)
+
+    natural_key.dependencies = ["leagues.league"]
+
     def __str__(self):
         return self.name
 
 
 class MatchManager(OrderedModelManager):
+
+    def get_by_natural_key(self, league_slug, uuid):
+        return self.get(
+            league__slug=LEAGUE_SLUG.get(league_slug),
+            uuid=uuid,
+        )
 
     def with_players(self, players):
         player_qs = Player.objects.filter(
@@ -695,6 +758,11 @@ class Match(OrderedModel):
                 name="unique_match_uuid_in_league",
             ),
         ]
+
+    def natural_key(self):
+        return (self.league.slug, self.uuid)
+
+    natural_key.dependencies = ["leagues.league"]
 
     def has_result(self):
         return (

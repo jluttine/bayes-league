@@ -22,10 +22,11 @@ def calculate_ranking(X, n_players, regularisation, initial=np.nan):
     """
 
     if n_players == 0:
-        return []
+        return ([], [])
 
     if len(X) == 0:
-        return [None] * n_players
+        nones = [None] * n_players
+        return (nones, nones)
 
     # Remove matches with zero points
     X = list(filter(lambda x: x[2] > 0 or x[3] > 0, X))

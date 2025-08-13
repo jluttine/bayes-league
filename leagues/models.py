@@ -284,7 +284,6 @@ class Player(models.Model):
         editable=False,
     )
     uuid = models.UUIDField(
-        unique=True,
         default=uuid.uuid4,
         editable=False,
     )
@@ -307,6 +306,10 @@ class Player(models.Model):
             models.UniqueConstraint(
                 fields=["league", "name"],
                 name="unique_names_in_league",
+            ),
+            models.UniqueConstraint(
+                fields=["league", "uuid"],
+                name="unique_player_uuid_in_league",
             ),
         ]
 
@@ -674,7 +677,6 @@ class Match(OrderedModel):
         default=None,
     )
     uuid = models.UUIDField(
-        unique=True,
         default=uuid.uuid4,
         editable=False,
     )
@@ -687,6 +689,12 @@ class Match(OrderedModel):
     class Meta:
         # The ordering is defined in OrderedModel base class
         ordering = ["order"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["league", "uuid"],
+                name="unique_match_uuid_in_league",
+            ),
+        ]
 
     def has_result(self):
         return (

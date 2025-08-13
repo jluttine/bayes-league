@@ -504,7 +504,7 @@ def delete_player(request, league_slug, player_uuid):
         ),
     )
 
-def calculate_ranking(matches, regularisation):
+def calculate_ranking(matches, regularisation, initial=dict()):
     # FIXME: One should be able to avoid reading Player table because we only
     # need some keys to identify the players and such keys should be in Match
     # table already. Then, remove prefetch_related.
@@ -523,7 +523,11 @@ def calculate_ranking(matches, regularisation):
         p.uuid: i
         for (i, p) in enumerate(ps)
     }
-    rs = ranking.calculate_ranking(
+    r0 = list(map(
+        lambda r: np.nan if r is None else r,
+        [initial.get(p.uuid) for p in ps]
+    ))
+    (rs, raws) = ranking.calculate_ranking(
         [
             (
                 # FIXME: One should be able to avoid reading Player table
@@ -540,8 +544,9 @@ def calculate_ranking(matches, regularisation):
         ],
         len(p2id),
         regularisation,
+        initial=r0,
     )
-    return (ps, rs)
+    return (ps, rs, raws)
 
 
 def update_league_ranking(league):
@@ -551,16 +556,25 @@ def update_league_ranking(league):
         .prefetch_related("away_team")
         .filter(league=league)
     )
-    (ps, rs) = calculate_ranking(ms, league.regularisation)
+    (ps, rs, raws) = calculate_ranking(
+        ms,
+        league.regularisation,
+        initial={
+            p.uuid: p.score_raw
+            for p in models.Player.objects.filter(league=league)
+        },
+    )
 
     # Find ranking scores for each player in the league
     prs = {p.uuid: r for (p, r) in zip(ps, rs)}
+    praws = {p.uuid: raw for (p, raw) in zip(ps, raws)}
     players = models.Player.objects.filter(league=league)
     for p in players:
         # Update the score (if found) or set to null
         p.score = prs.get(p.uuid, None)
+        p.score_raw = praws.get(p.uuid, None)
     # Update the database
-    models.Player.objects.bulk_update(players, ["score"])
+    models.Player.objects.bulk_update(players, ["score", "score_raw"])
     return
 
 
@@ -574,7 +588,14 @@ def update_stage_ranking(stage, regularisation):
         .prefetch_related("home_team")
         .prefetch_related("away_team")
     )
-    (ps, rs) = calculate_ranking(ms, regularisation)
+    (ps, rs, raws) = calculate_ranking(
+        ms,
+        regularisation,
+        initial={
+            r.player.uuid: r.score_raw
+            for r in models.RankingScore.objects.filter(stage=stage)
+        },
+    )
 
     # NOTE: Perhaps deletion and creation could be combined by using bulk_create
     # with update_conflicts and update_fields. However, we would still need to
@@ -591,8 +612,9 @@ def update_stage_ranking(stage, regularisation):
                 stage=stage,
                 player=p,
                 score=r,
+                score_raw=raw,
             )
-            for (p, r) in zip(ps, rs)
+            for (p, r, raw) in zip(ps, rs, raws)
         ]
     )
 

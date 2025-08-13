@@ -330,6 +330,11 @@ class Player(models.Model):
         null=True,
         default=None,
     )
+    score_raw = models.FloatField(
+        blank=True,
+        null=True,
+        default=None,
+    )
     key = models.CharField(
         null=False,
         blank=False,
@@ -979,6 +984,7 @@ class RankingScore(models.Model):
     stage = models.ForeignKey(Stage, on_delete=models.CASCADE)
     player = models.ForeignKey(Player, on_delete=models.CASCADE)
     score = models.FloatField(blank=True, null=True, default=None)
+    score_raw = models.FloatField(blank=True, null=True, default=None)
 
     class Meta:
         ordering = ["stage", "-score", "player__name"]

@@ -13,7 +13,7 @@ from autograd.scipy.special import gammaln, logsumexp
 from autograd import value_and_grad
 
 
-def calculate_ranking(X, n_players, regularisation):
+def calculate_ranking(X, n_players, regularisation, initial=np.nan):
     """
     Format of X:
 
@@ -65,11 +65,15 @@ def calculate_ranking(X, n_players, regularisation):
             -np.sum(regularisation*logp_reg + regularisation*logq_reg)
         )
 
+    # Construct the initial array
+    x0 = np.broadcast_to(initial, (n_players,))
+    x0 = np.nan_to_num(x0, nan=0.0)
+
     logging.info("Calculating rankings..")
     t0 = time.monotonic()
     res = minimize(
         value_and_grad(negloglikelihood),
-        x0=np.zeros(n_players),
+        x0=x0,
         jac=True,
         method="BFGS",  # default anyway
         options=dict(
@@ -101,7 +105,7 @@ def calculate_ranking(X, n_players, regularisation):
     for i in not_played_ids:
         scores[i] = None
 
-    return scores
+    return (scores, res.x)
 
 
 def score_to_logp(x):

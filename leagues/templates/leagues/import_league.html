@@ -1,0 +1,8 @@
+<h1>Import league</h1>
+
+<form enctype="multipart/form-data" action="{% url 'import_league' %}" method="post">
+  {% csrf_token %}
+  {{ form.as_p }}
+  <a class="button is-primary is-light" href={% url 'index' %}>Cancel</a>
+  <input class="button is-primary" type="submit" value="Save">
+</form>

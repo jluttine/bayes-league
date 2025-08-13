@@ -896,13 +896,13 @@ class Match(OrderedModel):
 class HomeTeamPlayer(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     # Don't let players be deleted if they are assigned to a match
-    player = models.ForeignKey(Player, on_delete=models.PROTECT)
+    player = models.ForeignKey(Player, on_delete=models.RESTRICT)
 
 
 class AwayTeamPlayer(models.Model):
     match = models.ForeignKey(Match, on_delete=models.CASCADE)
     # Don't let players be deleted if they are assigned to a match
-    player = models.ForeignKey(Player, on_delete=models.PROTECT)
+    player = models.ForeignKey(Player, on_delete=models.RESTRICT)
 
 
 class Period(models.Model):

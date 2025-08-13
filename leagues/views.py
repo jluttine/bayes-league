@@ -1562,7 +1562,6 @@ def create_calibration_matches(request, league_slug):
             for f in match_formset:
                 f.instance.stage = stage
                 if not f.is_valid():
-                    print(f)
                     valid = False
             if valid:
                 for f in match_formset:

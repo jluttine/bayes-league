@@ -175,3 +175,5 @@ LOGGING = {
         "level": "INFO",
     },
 }
+
+SILKY_PYTHON_PROFILER = True

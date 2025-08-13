@@ -20,6 +20,7 @@ mkShell {
           ipython
           django
           django-ordered-model
+          django-silk
           pytest
         ]
       )

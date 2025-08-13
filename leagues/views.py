@@ -19,6 +19,8 @@ from django.db import IntegrityError
 from django.db.models.functions import Now
 from django.core import serializers
 
+from silk.profiling.profiler import silk_profile
+
 from . import models
 from . import forms
 from . import ranking
@@ -184,6 +186,7 @@ def get_user_banner_matches(matches, league, user):
     )
 
 
+@silk_profile()
 def view_league(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)

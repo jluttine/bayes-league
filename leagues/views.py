@@ -1994,7 +1994,15 @@ def import_league(request):
             # Update rankings
             league = models.League.objects.get(slug=slug)
             update_ranking(league, *models.Stage.objects.filter(league=league))
-            return http.HttpResponseRedirect(reverse("index"))
+            return http.HttpResponseRedirect(
+                reverse(
+                    "login_admin",
+                    args=[
+                        league.slug,
+                        league.write_key,
+                    ],
+                )
+            )
 
     return render(
         request,

@@ -1,4 +1,4 @@
-from django.urls import path, include
+from django.urls import path
 
 from . import views
 
@@ -186,5 +186,4 @@ urlpatterns = [
         views.import_league,
         name="import_league",
     ),
-    path("silk/", include("silk.urls", namespace="silk")),
 ]

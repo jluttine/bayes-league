@@ -39,8 +39,8 @@
             </a>
           </td>
           {% if match.court %}
-          <td>
-            Court {{ match.court }}
+          <td class="is-light">
+            {{ match.court }}
           </td>
           {% endif %}
           {% include "leagues/cells_match_teams.html" with class="is-light" %}

@@ -49,7 +49,7 @@ def get_user(league, request):
         return None
 
     try:
-        player = models.Player.objects.get(uuid=user, key=key)
+        player = models.Player.objects.get(league=league, uuid=user, key=key)
     except (exceptions.ValidationError, models.Player.DoesNotExist):
         return None
     else:

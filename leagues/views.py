@@ -921,7 +921,7 @@ def find_r2_cost_lowerbound(R2_masked):
     return cost
 
 
-def create_even_matches(players, extra_matches=[], odd_player_plays=True):
+def create_even_matches(players, extra_matches=[], odd_player_plays=True, odd_opponent_plays_twice=False):
     # Sort players based on ranking
     players = sorted(
         players,
@@ -1000,13 +1000,10 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True):
                 )
             )[0]
             odd_matches = [(opponent, odd_player)]
-            if C_extra[opponent,:].sum() > C_extra[odd_player,:].sum():
-                # If the odd player had played less, let them play more
-                remaining_players = np.delete(np.arange(N), opponent)
-            else:
-                # Otherwise, let the opponent play more, because it's nicer to
-                # let the one higher in the ranking to play more.
+            if odd_opponent_plays_twice:
                 remaining_players = np.delete(np.arange(N), odd_player)
+            else:
+                remaining_players = np.delete(np.arange(N), opponent)
         else:
             # Find the "odd" player: has played the most
             odd_player = np.lexsort(
@@ -1225,6 +1222,12 @@ def create_multiple_matches(request, league_slug):
                         extra_matches=matches,
                         # At rounds 0, 2, 4, 6, ... the odd player plays twice.
                         odd_player_plays=((i % 2) == 0),
+                        # On the last round, the odd opponent plays twice, not
+                        # the odd player itself. This way we probably get more
+                        # important and interesting an extra match. Also, the
+                        # one who "has to" play against the "worst" team, gets
+                        # another match with more at stake.
+                        odd_opponent_plays_twice=(i == rounds-1),
                     )
             else:
                 matches = ((rounds * m) // 2) * [(None, None)]

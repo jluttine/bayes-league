@@ -109,7 +109,7 @@ def model_form_view(request, Form, template, redirect, context={}, save=True,
                         form.save()
                         formset.save()
                     return http.HttpResponseRedirect(redirect(**form.cleaned_data))
-            elif any(
+            if any(
                     "modified" == e.code
                     for e in form.errors.as_data().get("__all__", [])
             ):
@@ -123,16 +123,16 @@ def model_form_view(request, Form, template, redirect, context={}, save=True,
                         "Sorry for the inconvenience."
                     )
                 )
-            else:
-                return render(
-                    request,
-                    template,
-                    dict(
-                        form=form,
-                        formset=formset,
-                        **context,
-                    )
+            return render(
+                request,
+                template,
+                dict(
+                    form=form,
+                    formset=formset,
+                    **context,
                 )
+            )
+
         return conditional(request.POST, process)
 
     else:

@@ -184,8 +184,13 @@ class Stage(OrderedModel):
     )
     name = models.CharField(
         max_length=50,
+        blank=False,
+        null=False
     )
-    slug = models.SlugField()
+    slug = models.SlugField(
+        blank=False,
+        null=False
+    )
     ranking = models.ManyToManyField(
         "Player",
         through="RankingScore",

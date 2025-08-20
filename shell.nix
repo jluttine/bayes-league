@@ -21,6 +21,7 @@ mkShell {
           django
           django-ordered-model
           pytest
+          beautifulsoup4
         ]
       )
     )

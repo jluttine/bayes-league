@@ -1178,6 +1178,51 @@ def create_even_matches(players, extra_matches=[], odd_player_plays=True, odd_op
     ]
 
 
+def create_even_match_rounds(players, n_rounds, n_courts):
+    matches = []
+    for i in range(n_rounds):
+        new_matches = create_even_matches(
+            players,
+            extra_matches=matches,
+            # At rounds 0, 2, 4, 6, ... the odd player plays twice.
+            odd_player_plays=((i % 2) == 0),
+            # On the last round, the odd opponent plays twice, not
+            # the odd player itself. This way we probably get more
+            # important and interesting an extra match. Also, the
+            # one who "has to" play against the "worst" team, gets
+            # another match with more at stake.
+            odd_opponent_plays_twice=(i == n_rounds-1),
+        )
+
+        # Re-order a few of the first new matches so that a player isn't
+        # expected to be playing on two courts at the same time.
+
+        # How many matches are still being played when the next round already
+        # begins:
+        n_remaining = len(matches) % n_courts
+
+        if n_remaining > 0:
+            # Players that are still playing when the new round begins
+            ps_in_remaining = set([
+                p
+                for ps in matches[-n_remaining:]
+                for p in ps
+            ])
+            # Prioritize matches that don't have players from those matches that
+            # are still being played. Use stable sorting so the ordering isn't
+            # messed up in other ways.
+            new_matches = sorted(
+                new_matches,
+                key=lambda m: (
+                    (m[0] in ps_in_remaining) or
+                    (m[1] in ps_in_remaining)
+                ),
+            )
+
+        matches = matches + new_matches
+
+    return matches
+
 def create_multiple_matches(request, league_slug):
     league = get_object_or_404(models.League, slug=league_slug)
     user = get_user(league, request)
@@ -1212,20 +1257,11 @@ def create_multiple_matches(request, league_slug):
             rounds = form.cleaned_data["rounds"]
 
             if form.cleaned_data["autofill_teams"]:
-                matches = []
-                for i in range(rounds):
-                    matches = matches + create_even_matches(
-                        players,
-                        extra_matches=matches,
-                        # At rounds 0, 2, 4, 6, ... the odd player plays twice.
-                        odd_player_plays=((i % 2) == 0),
-                        # On the last round, the odd opponent plays twice, not
-                        # the odd player itself. This way we probably get more
-                        # important and interesting an extra match. Also, the
-                        # one who "has to" play against the "worst" team, gets
-                        # another match with more at stake.
-                        odd_opponent_plays_twice=(i == rounds-1),
-                    )
+                matches = create_even_match_rounds(
+                    players,
+                    n_rounds=rounds,
+                    n_courts=n,
+                )
             else:
                 matches = ((rounds * m) // 2) * [(None, None)]
 

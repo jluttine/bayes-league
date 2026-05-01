@@ -148,7 +148,7 @@ def import_bvt(league, year, name, start_gdid):
                 datetime=dt,
             )
 
-        print(f"{ok} o Results from '{soup.h1}' imported{end}")
+        print(f"{ok} o Results from '{title}' imported{end}")
 
     from leagues.views import update_ranking
     update_ranking(league, *previous_stages)

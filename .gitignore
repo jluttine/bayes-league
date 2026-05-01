@@ -3,6 +3,7 @@
 *.log
 tmp/
 .direnv
+*.prof
 
 *.py[cod]
 *.egg
